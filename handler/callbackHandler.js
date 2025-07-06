@@ -18,7 +18,7 @@ export class CallbackHandler {
       const messageId = callbackQuery.message.message_id;
 
       try {
-        await this.bot.deleteMessage(chatId, messageId).catch(e => console.log('Не удалось удалить сообщение:', e.message));
+        await this.bot.deleteMessage(chatId, messageId)
 
         switch (data) {
           case 'daily':
@@ -39,7 +39,6 @@ export class CallbackHandler {
           case 'back':
             await showMainMenu(this.bot, chatId);
             break;
-          
           default:
             await this.bot.sendMessage(chatId, 'Неизвестная команда');
         }

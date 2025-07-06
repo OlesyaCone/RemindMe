@@ -17,11 +17,21 @@ bot.onText(/\/start/, async (msg) => {
   await showMainMenu(bot, chatId);
 });
 
-bot.onText(/\/help/, (msg) => {
+bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, '[Инструкция](https://telegra.ph/RemindMe-07-02)', {
-    parse_mode: 'MarkdownV2',
-  });
+  await bot.sendMessage(
+    chatId,
+    '[Инструкция](https://telegra.ph/RemindMe-07-02)',
+    {
+      parse_mode: 'MarkdownV2',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "⬅️ Добавить напоминание", callback_data: "back" }]
+        ]
+      }
+    }
+  );
+
 });
 
 bot.onText(/\/remind/, async (msg) => {
