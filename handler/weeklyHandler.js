@@ -2,11 +2,11 @@ export async function handleWeekly(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
 
   await bot.answerCallbackQuery(callbackQuery.id);
-  await askWeeklyInput(bot, chatId);
+  await weeklyInput(bot, chatId);
   setupInputHandler(bot, chatId);
 }
 
-async function askWeeklyInput(bot, chatId) {
+async function weeklyInput(bot, chatId) {
   await bot.sendMessage(
     chatId,
     'Вы выбрали еженедельное напоминание. Укажите дни недели и время. Например: \nпн, вт 15:00\nвс 02:00',
