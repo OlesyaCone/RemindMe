@@ -9,7 +9,7 @@ export async function handleAfterTime(bot, callbackQuery) {
 async function afterInput(bot, chatId) {
   await bot.sendMessage(
     chatId,
-    'Вы выбрали напоминание через время. Укажите минуты или часы. Например:\n14мин\nИЛИ\n1ч 17мин',
+    'Вы выбрали напоминание через время. Укажите минуты или часы. Например:\n0ч 14мин\nИЛИ\n1ч 17мин',
     {
       reply_markup: {
         inline_keyboard: [
@@ -24,15 +24,16 @@ async function afterInput(bot, chatId) {
 function setupInputHandler(bot, chatId) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
-    
-    const { valid, error } = checkInput(msg.text);
-    
+
+    const { valid, error, markup, hour = 0, minute = 0 } = checkInput(msg.text);
+
     if (!valid) {
-      await bot.sendMessage(chatId, error);
+      await bot.sendMessage(chatId, error, {
+        reply_markup: markup
+      });
       return;
     }
 
-    const { hour, minute } = parseInput(msg.text);
     bot.removeTextListener(handler);
     await bot.sendMessage(chatId, `Напоминание будет через: ${hour}ч ${minute}мин`);
   };
@@ -41,72 +42,87 @@ function setupInputHandler(bot, chatId) {
 }
 
 function checkInput(text) {
-  const trimmed = text.trim();
-  
-  if (/^\d+мин$/.test(trimmed)) {
-    const minutes = parseInt(trimmed);
-    if (minutes >= 0 && minutes <= 59) {
-      return { valid: true, error: '' };
-    }
+  if (!text.trim()) {
     return {
       valid: false,
-      error: 'Минуты должны быть от 0 до 59'
-    };
-  }
-  
-  if (/^\d+ч \d+мин$/.test(trimmed)) {
-    const [hoursPart, minsPart] = trimmed.split(' ');
-    const hours = parseInt(hoursPart);
-    const minutes = parseInt(minsPart);
-    
-    if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-      return { valid: true, error: '' };
-    }
-    
-    if (hours > 23) {
-      return {
-        valid: false,
-        error: 'Часы должны быть от 0 до 23. Для большего интервала выберите точную дату.'
-      };
-    }
-    
-    return {
-      valid: false,
-      error: 'Минуты должны быть от 0 до 59'
+      error: 'Введите время в формате: "30мин 2ч" или "1ч 15мин"',
+      markup: {
+        inline_keyboard: [
+          [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
+        ]
+      }
     };
   }
 
+  const { minute, hours } = parseInput(text);
+  
+  if (minute === undefined && hours === undefined) {
+    return {
+      valid: false,
+      error: 'Неверный формат. Укажите минуты (0-59) или часы (0-23). Например:\n0ч 14мин\nИЛИ\n1ч 17мин',
+      markup: {
+        inline_keyboard: [
+          [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
+        ]
+      }
+    };
+  }
+
+  if (minute !== undefined) {
+    const minuteNum = parseInt(minute);
+    if (isNaN(minuteNum) || !checkMin(minuteNum)) {
+      return {
+        valid: false,
+        error: 'Некорректное количество минут. Должно быть от 0 до 59',
+        markup: {
+          inline_keyboard: [
+            [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
+          ]
+        }
+      };
+    }
+  }
+
+  if (hours !== undefined) {
+    const hoursNum = parseInt(hours);
+    const [isNegative, isTooLarge] = checkHour(hoursNum);
+    if (isNegative || isTooLarge) {
+      return {
+        valid: false,
+        error: 'Некорректное количество часов. Должно быть от 0 до 23',
+        markup: {
+          inline_keyboard: [
+            [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
+          ]
+        }
+      };
+    }
+  }
+
   return {
-    valid: false,
-    error: 'Неверный формат. Примеры:\n14мин\nИЛИ\n1ч 17мин'
+    valid: true,
+    hour: hours ? parseInt(hours) : 0,
+    minute: minute ? parseInt(minute) : 0
   };
 }
 
 function parseInput(text) {
-  const trimmed = text.trim();
-  
-  if (/^\d+мин$/.test(trimmed)) {
-    return {
-      hour: 0,
-      minute: parseInt(trimmed)
-    };
-  }
-  
-  if (/^\d+ч \d+мин$/.test(trimmed)) {
-    const [hoursPart, minsPart] = trimmed.split(' ');
-    return {
-      hour: parseInt(hoursPart),
-      minute: parseInt(minsPart)
-    };
-  }
-  
-  return { hour: 0, minute: 0 };
+  const trimmed = text.trim().toLowerCase();
+  let minute, hours;
+
+  const minuteMatch = trimmed.match(/(\d+)\s*мин(?:ут)?/);
+  if (minuteMatch) minute = minuteMatch[1];
+
+  const hourMatch = trimmed.match(/(\d+)\s*ч(?:ас(?:ов)?)?/);
+  if (hourMatch) hours = hourMatch[1];
+
+  return { minute, hours };
 }
 
-function checkHour(hour) {
-  return hour >= 0 && hour <= 23;
+function checkMin(minute) {
+  return minute >= 0 && minute < 60;
 }
 
-function checkMinute(minute) {
-  return minute >= 0 && minute <= 59;
+function checkHour(hours) {
+  return [hours < 0, hours >= 24];
 }
