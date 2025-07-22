@@ -1,10 +1,19 @@
 import TelegramBot from 'node-telegram-bot-api';
 import 'dotenv/config';
+import express from 'express';
+import mongoose from 'mongoose';
 import { CallbackHandler } from './handler/callbackHandler.js';
 import { showMainMenu } from './handler/menuUtils.js';
 
+const app = express();
+const port = process.env.PORT || 3005;
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
+const mongoUrl = process.env.MONGO_URL;
+
+mongoose.connect(mongoUrl)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
 new CallbackHandler(bot);
 
@@ -31,10 +40,13 @@ bot.onText(/\/help/, async (msg) => {
       }
     }
   );
-
 });
 
 bot.onText(/\/remind/, async (msg) => {
   const chatId = msg.chat.id;
   await showMainMenu(bot, chatId);
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
