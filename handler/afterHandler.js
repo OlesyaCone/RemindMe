@@ -1,3 +1,5 @@
+import { answerHandler } from './answerHandler.js';
+
 export async function handleAfterTime(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
 
@@ -35,7 +37,15 @@ function setupInputHandler(bot, chatId) {
     }
 
     bot.removeTextListener(handler);
-    await bot.sendMessage(chatId, `Напоминание будет через: ${hour}ч ${minute}мин`);
+    const reminderTime = addTimeToCurrent(hour, minute);
+    await bot.sendMessage(chatId, `Напоминание будет через ${hour}ч ${minute}мин`);
+    const post = {
+      type: 'after',
+      time: reminderTime,
+      chatId: chatId
+    };
+
+    await answerHandler(bot, post);
   };
 
   bot.onText(/.*/, handler);
@@ -55,7 +65,7 @@ function checkInput(text) {
   }
 
   const { minute, hours } = parseInput(text);
-  
+
   if (minute === undefined && hours === undefined) {
     return {
       valid: false,
@@ -125,4 +135,15 @@ function checkMin(minute) {
 
 function checkHour(hours) {
   return [hours < 0, hours >= 24];
+}
+
+function addTimeToCurrent(hoursToAdd, minutesToAdd) {
+  const now = new Date();
+  now.setHours(now.getHours() + hoursToAdd);
+  now.setMinutes(now.getMinutes() + minutesToAdd);
+
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
 }

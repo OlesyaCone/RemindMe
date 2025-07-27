@@ -1,3 +1,5 @@
+import { answerHandler } from './answerHandler.js';
+
 export async function handleWeekly(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
 
@@ -24,9 +26,9 @@ async function weeklyInput(bot, chatId) {
 function setupInputHandler(bot, chatId) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
-    
+
     const { valid, error } = checkInput(msg.text);
-    
+
     if (!valid) {
       await bot.sendMessage(chatId, error);
       return;
@@ -34,7 +36,15 @@ function setupInputHandler(bot, chatId) {
 
     const { days, time } = parseInput(msg.text);
     bot.removeTextListener(handler);
-    await bot.sendMessage(chatId, `Напоминание установлено на: ${days.join(', ')} ${time}`);
+    await bot.sendMessage(chatId, `Напоминание будет установлено на ${days.join(', ')} ${time}`);
+    const post = {
+      type: 'weekly',
+      time: time,
+      chatId: chatId,
+      days: days
+    };
+
+    await answerHandler(bot, post);
   };
 
   bot.onText(/.*/, handler);
@@ -64,7 +74,7 @@ function parseInput(text) {
   const parts = trimmed.split(' ');
   const time = parts.pop();
   const days = parts.join(' ').split(',').map(day => day.trim());
-  
+
   return { days, time };
 }
 

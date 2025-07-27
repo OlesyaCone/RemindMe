@@ -1,3 +1,5 @@
+import { answerHandler } from './answerHandler.js';
+
 export async function handleSpecificDate(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
 
@@ -24,9 +26,9 @@ async function specificInput(bot, chatId) {
 function setupInputHandler(bot, chatId) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
-    
+
     const { valid, error } = checkInput(msg.text);
-    
+
     if (!valid) {
       await bot.sendMessage(chatId, error);
       return;
@@ -34,7 +36,15 @@ function setupInputHandler(bot, chatId) {
 
     const { date, time } = parseInput(msg.text);
     bot.removeTextListener(handler);
-    await bot.sendMessage(chatId, `Напоминание установлено на: ${date} ${time}`);
+    await bot.sendMessage(chatId, `Напоминание будет установлено на: ${date} ${time}`);
+    const post = {
+      type: 'specific',
+      date: date,
+      time: time,
+      chatId: chatId
+    };
+
+    await answerHandler(bot, post);
   };
 
   bot.onText(/.*/, handler);
@@ -43,7 +53,7 @@ function setupInputHandler(bot, chatId) {
 function checkInput(text) {
   const trimmed = text.trim();
   const parts = trimmed.split(' ');
-  
+
   if (parts.length !== 2) {
     return {
       valid: false,
@@ -81,7 +91,7 @@ function checkTime(time) {
 
 function checkDate(date) {
   const [day, month, year] = date.split('.').map(Number);
-  
+
   if (month < 1 || month > 12) return false;
   if (day < 1 || day > 31) return false;
   if (year < 1000 || year > 9999) return false;
@@ -92,6 +102,6 @@ function checkDate(date) {
     const isLeap = (year % 400 === 0) || (year % 100 !== 0 && year % 4 === 0);
     if (day > (isLeap ? 29 : 28)) return false;
   }
-  
+
   return true;
 }

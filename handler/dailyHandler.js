@@ -1,3 +1,5 @@
+import { answerHandler } from './answerHandler.js';
+
 export async function handleDaily(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
 
@@ -34,7 +36,15 @@ function setupInputHandler(bot, chatId) {
 
     const time = parseInput(msg.text);
     bot.removeTextListener(handler);
-    await bot.sendMessage(chatId, `Ежедневное напоминание установлено на ${time}`);
+    await bot.sendMessage(chatId, `Ежедневное напоминание будет установлено на ${time}`);
+
+    const post = {
+      type: 'daily',
+      time: time,
+      chatId: chatId
+    };
+
+    await answerHandler(bot, post); 
   };
 
   bot.onText(/.*/, handler);
