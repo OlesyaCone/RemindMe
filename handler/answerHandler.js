@@ -1,280 +1,361 @@
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
+import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const writeFile = promisify(fs.writeFile);
+const mkdir = promisify(fs.mkdir);
+
+const filesDir = path.join(__dirname, '../files');
+if (!fs.existsSync(filesDir)) {
+    await mkdir(filesDir, { recursive: true });
+}
+
+async function saveFile(fileId, fileData) {
+    const filePath = path.join(filesDir, fileId);
+    await writeFile(filePath, fileData);
+    return `../files/${fileId}`;
+}
+
 export async function answerHandler(bot, post, callbackQuery) {
     if (callbackQuery) {
         await bot.answerCallbackQuery(callbackQuery.id);
     }
-    await answerInput(bot, post.chatId);
-    console.log(post);
-}
 
-async function answerInput(bot, chatId) {
     await bot.sendMessage(
-        chatId,
+        post.chatId,
         '📝 Введите напоминание. Можно отправить:\n' +
         '• Текст\n• Фото/видео\n• Документ\n• Голосовое\n• Альбом файлов\n' +
         '• Стикер\n• Геолокацию\n• Контакт\n• Опрос'
-    );
+    );;
+
     bot.removeTextListener(/.*/);
 
-    bot.once('message', (msg) => {
-        if (msg.chat.id !== chatId) return;
+    const mediaGroups = new Map();
+
+    const onMessage = async (msg) => {
+        if (msg.chat.id !== post.chatId) return;
 
         if (msg.media_group_id) {
-            bot.once('media_group', (groupMsgs) =>
-                handleMediaGroup(bot, groupMsgs, chatId, post));
+            if (!mediaGroups.has(msg.media_group_id)) {
+                mediaGroups.set(msg.media_group_id, {
+                    timer: setTimeout(async () => {
+                        const groupMsgs = mediaGroups.get(msg.media_group_id).messages;
+                        await handleMediaGroup(bot, groupMsgs, post.chatId, post);
+                        mediaGroups.delete(msg.media_group_id);
+                    }, 3000),
+                    messages: []
+                });
+            }
+            mediaGroups.get(msg.media_group_id).messages.push(msg);
             return;
         }
+        bot.removeListener('message', onMessage);
+        await handleUniversalMessage(bot, msg, true, post);
+    };
 
-        handleUniversalMessage(bot, msg, true, post);
-    });
+    bot.on('message', onMessage);
 }
 
-function handleUniversalMessage(bot, msg, isReminder = false, post) {
+async function handleUniversalMessage(bot, msg, isReminder = false, post) {
     const chatId = msg.chat.id;
     let responseText = '';
 
-    switch (true) {
-        case !!msg.text && !msg.entities:
-            responseText = isReminder
-                ? `📝 Напоминание: "${msg.text}"`
-                : `Вы прислали текст: "${msg.text}"`;
-            post.remind = {
-                type: 'text',
-                content: msg.text,
-                entities: msg.entities || []
-            };
-            break;
+    try {
+        switch (true) {
+            case !!msg.text && !msg.entities:
+                responseText = isReminder
+                    ? `📝 Напоминание: "${msg.text}"`
+                    : `Вы прислали текст: "${msg.text}"`;
+                post.remind = {
+                    type: 'text',
+                    content: msg.text,
+                    entities: msg.entities || []
+                };
+                break;
 
-        case !!msg.photo:
-            const photoId = msg.photo[msg.photo.length - 1].file_id;
-            responseText = msg.caption
-                ? `📸 Напоминание с фото: "${msg.caption}"`
-                : '📸 Напоминание с фото';
-            post.remind = {
-                type: 'photo',
-                file_id: photoId,
-                file_unique_id: msg.photo[msg.photo.length - 1].file_unique_id,
-                caption: msg.caption || '',
-                width: msg.photo[msg.photo.length - 1].width,
-                height: msg.photo[msg.photo.length - 1].height,
-                file_size: msg.photo[msg.photo.length - 1].file_size
-            };
-            break;
+            case !!msg.photo:
+                const photoId = msg.photo[msg.photo.length - 1].file_id;
+                const photoFile = await bot.getFile(photoId);
+                const photoPath = await saveFile(photoId, await downloadFile(bot, photoFile));
+                responseText = msg.caption
+                    ? `📸 Напоминание с фото: "${msg.caption}"`
+                    : '📸 Напоминание с фото';
+                post.remind = {
+                    type: 'photo',
+                    file_id: photoPath,
+                    caption: msg.caption || '',
+                };
+                break;
 
-        case !!msg.video:
-            responseText = msg.caption
-                ? `🎥 Напоминание с видео: "${msg.caption}"`
-                : '🎥 Напоминание с видео';
-            post.remind = {
-                type: 'video',
-                file_id: msg.video.file_id,
-                file_unique_id: msg.video.file_unique_id,
-                caption: msg.caption || '',
-                duration: msg.video.duration,
-                width: msg.video.width,
-                height: msg.video.height,
-                mime_type: msg.video.mime_type,
-                file_size: msg.video.file_size
-            };
-            break;
+            case !!msg.video:
+                const videoFile = await bot.getFile(msg.video.file_id);
+                const videoPath = await saveFile(msg.video.file_id, await downloadFile(bot, videoFile));
+                responseText = msg.caption
+                    ? `🎥 Напоминание с видео: "${msg.caption}"`
+                    : '🎥 Напоминание с видео';
+                post.remind = {
+                    type: 'video',
+                    file_id: videoPath,
+                    caption: msg.caption || '',
+                };
+                break;
 
-        case !!msg.document:
-            responseText = `📄 Напоминание с документом: ${msg.document.file_name || 'Без названия'}`;
-            post.remind = {
-                type: 'document',
-                file_id: msg.document.file_id,
-                file_unique_id: msg.document.file_unique_id,
-                file_name: msg.document.file_name || '',
-                mime_type: msg.document.mime_type || '',
-                file_size: msg.document.file_size,
-                caption: msg.caption || ''
-            };
-            break;
+            case !!msg.document:
+                const docFile = await bot.getFile(msg.document.file_id);
+                const docPath = await saveFile(msg.document.file_id, await downloadFile(bot, docFile));
+                responseText = `📄 Напоминание с документом: ${msg.document.file_name || 'Без названия'}`;
+                post.remind = {
+                    type: 'document',
+                    file_id: docPath,
+                    file_name: msg.document.file_name,
+                    caption: msg.caption || ''
+                };
+                break;
 
-        case !!msg.voice:
-            responseText = '🎤 Голосовое напоминание';
-            post.remind = {
-                type: 'voice',
-                file_id: msg.voice.file_id,
-                file_unique_id: msg.voice.file_unique_id,
-                duration: msg.voice.duration,
-                mime_type: msg.voice.mime_type,
-                file_size: msg.voice.file_size
-            };
-            break;
+            case !!msg.voice:
+                const voiceFile = await bot.getFile(msg.voice.file_id);
+                const voicePath = await saveFile(msg.voice.file_id, await downloadFile(bot, voiceFile));
+                responseText = '🎤 Голосовое напоминание';
+                post.remind = {
+                    type: 'voice',
+                    file_id: voicePath,
+                };
+                break;
 
-        case !!msg.video_note:
-            responseText = '🌀 Видео-кружок';
-            post.remind = {
-                type: 'video_note',
-                file_id: msg.video_note.file_id,
-                file_unique_id: msg.video_note.file_unique_id,
-                duration: msg.video_note.duration,
-                length: msg.video_note.length,
-                file_size: msg.video_note.file_size
-            };
-            break;
+            case !!msg.video_note:
+                const videoNoteFile = await bot.getFile(msg.video_note.file_id);
+                const videoNotePath = await saveFile(msg.video_note.file_id, await downloadFile(bot, videoNoteFile));
+                responseText = '🌀 Видео-кружок';
+                post.remind = {
+                    type: 'video_note',
+                    file_id: videoNotePath,
+                };
+                break;
 
-        case !!msg.sticker:
-            responseText = '😺 Стикер';
-            post.remind = {
-                type: 'sticker',
-                file_id: msg.sticker.file_id,
-                file_unique_id: msg.sticker.file_unique_id,
-                emoji: msg.sticker.emoji || '',
-                width: msg.sticker.width,
-                height: msg.sticker.height,
-                file_size: msg.sticker.file_size
-            };
-            break;
+            case !!msg.sticker:
+                const stickerFile = await bot.getFile(msg.sticker.file_id);
+                const stickerPath = await saveFile(msg.sticker.file_id, await downloadFile(bot, stickerFile));
+                responseText = '😺 Стикер';
+                post.remind = {
+                    type: 'sticker',
+                    file_id: stickerPath,
+                    emoji: msg.sticker.emoji || '',
+                };
+                break;
 
-        case !!msg.location:
-            responseText = `📍 Локация: ${msg.location.latitude}, ${msg.location.longitude}`;
-            post.remind = {
-                type: 'location',
-                latitude: msg.location.latitude,
-                longitude: msg.location.longitude,
-                live_period: msg.location.live_period || null
-            };
-            break;
+            case !!msg.location:
+                responseText = `📍 Локация: ${msg.location.latitude}, ${msg.location.longitude}`;
+                post.remind = {
+                    type: 'location',
+                    latitude: msg.location.latitude,
+                    longitude: msg.location.longitude,
+                    live_period: msg.location.live_period || null
+                };
+                break;
 
-        case !!msg.contact:
-            responseText = `👤 Контакт: ${msg.contact.first_name} ${msg.contact.phone_number}`;
-            post.remind = {
-                type: 'contact',
-                phone_number: msg.contact.phone_number,
-                first_name: msg.contact.first_name,
-                last_name: msg.contact.last_name || '',
-                vcard: msg.contact.vcard || ''
-            };
-            break;
+            case !!msg.contact:
+                responseText = `👤 Контакт: ${msg.contact.first_name} ${msg.contact.phone_number}`;
+                post.remind = {
+                    type: 'contact',
+                    phone_number: msg.contact.phone_number,
+                    first_name: msg.contact.first_name,
+                    last_name: msg.contact.last_name || '',
+                    vcard: msg.contact.vcard || ''
+                };
+                break;
 
-        case !!msg.poll:
-            responseText = `📊 Опрос: ${msg.poll.question}`;
-            post.remind = {
-                type: 'poll',
-                question: msg.poll.question,
-                options: msg.poll.options.map(opt => opt.text),
-                is_anonymous: msg.poll.is_anonymous,
-                type: msg.poll.type,
-                allows_multiple_answers: msg.poll.allows_multiple_answers || false
-            };
-            break;
+            case !!msg.poll:
+                responseText = `📊 Опрос: ${msg.poll.question}`;
+                post.remind = {
+                    type: 'poll',
+                    question: msg.poll.question,
+                    options: msg.poll.options.map(opt => opt.text),
+                    is_anonymous: msg.poll.is_anonymous,
+                    type: msg.poll.type,
+                    allows_multiple_answers: msg.poll.allows_multiple_answers || false
+                };
+                break;
 
-        case !!msg.dice:
-            responseText = `🎲 ${getDiceType(msg.dice.emoji)}: ${msg.dice.value}`;
-            post.remind = {
-                type: 'dice',
-                emoji: msg.dice.emoji,
-                value: msg.dice.value
-            };
-            break;
+            case !!msg.dice:
+                responseText = `🎲 ${getDiceType(msg.dice.emoji)}: ${msg.dice.value}`;
+                post.remind = {
+                    type: 'dice',
+                    emoji: msg.dice.emoji,
+                    value: msg.dice.value
+                };
+                break;
 
-        default:
-            responseText = '❌ Этот тип сообщения не поддерживается для напоминаний';
-            post.remind = {
-                type: 'unsupported'
-            };
-    }
-
-    const options = {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: "✏️ Изменить", callback_data: "edit_reminder" }],
-                [{ text: "🗑️ Удалить", callback_data: "delete_reminder" }]
-            ]
+            default:
+                responseText = '❌ Этот тип сообщения не поддерживается для напоминаний';
+                post.remind = {
+                    type: 'unsupported'
+                };
         }
-    };
 
-    if (isReminder) {
-        bot.sendMessage(chatId, responseText, options);
-
-        // Пересылаем оригинальное медиа для напоминаний
-        if (post.remind.file_id) {
-            const mediaMethods = {
-                photo: 'sendPhoto',
-                video: 'sendVideo',
-                document: 'sendDocument',
-                voice: 'sendVoice',
-                video_note: 'sendVideoNote',
-                sticker: 'sendSticker'
-            };
-
-            const type = Object.keys(mediaMethods).find(k => post.remind.type === k);
-            if (type) {
-                bot[mediaMethods[type]](chatId, post.remind.file_id, {
-                    caption: post.remind.caption || undefined
-                });
+        const options = {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "✅ Сохранить", callback_data: "save" }],
+                    [{ text: "⬅️ Заполнить заново", callback_data: "back" }]
+                ]
             }
+        };
+
+        if (isReminder) {
+            await bot.sendMessage(chatId, responseText, options);
+
+            if (post.remind.file_id) {
+                await sendSavedFile(bot, chatId, post.remind);
+            }
+        } else {
+            await bot.sendMessage(chatId, responseText);
         }
-    } else {
-        bot.sendMessage(chatId, responseText);
+
+        console.log(post)
+    } catch (error) {
+        console.error('Ошибка при обработке сообщения:', error);
+        await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении файла');
     }
 }
 
-function handleMediaGroup(bot, groupMsgs, chatId, post) {
-    const firstMsg = groupMsgs[0];
-    const caption = firstMsg.caption || '';
-    const fileTypes = new Set();
-
-    post.remind = {
-        type: 'media_group',
-        media_group_id: firstMsg.media_group_id,
-        items: [],
-        caption: caption
-    };
-
-    groupMsgs.forEach(msg => {
-        if (msg.photo) {
-            fileTypes.add('фото');
-            const photo = msg.photo[msg.photo.length - 1];
-            post.remind.items.push({
-                type: 'photo',
-                file_id: photo.file_id,
-                file_unique_id: photo.file_unique_id,
-                width: photo.width,
-                height: photo.height,
-                file_size: photo.file_size
-            });
+async function handleMediaGroup(bot, groupMsgs, chatId, post) {
+    try {
+        if (!groupMsgs || groupMsgs.length === 0) {
+            throw new Error('Получена пустая медиагруппа');
         }
-        else if (msg.video) {
-            fileTypes.add('видео');
-            post.remind.items.push({
-                type: 'video',
-                file_id: msg.video.file_id,
-                file_unique_id: msg.video.file_unique_id,
-                duration: msg.video.duration,
-                width: msg.video.width,
-                height: msg.video.height,
-                mime_type: msg.video.mime_type,
-                file_size: msg.video.file_size
-            });
-        }
-        else if (msg.document) {
-            fileTypes.add('документ');
-            post.remind.items.push({
-                type: 'document',
-                file_id: msg.document.file_id,
-                file_unique_id: msg.document.file_unique_id,
-                file_name: msg.document.file_name || '',
-                mime_type: msg.document.mime_type || '',
-                file_size: msg.document.file_size
-            });
-        }
-    });
 
-    const typesStr = Array.from(fileTypes).join(' + ');
-    const responseText = caption
-        ? `🖼️ Напоминание с альбомом (${typesStr}): "${caption}"`
-        : `🖼️ Напоминание с альбомом (${typesStr})`;
+        const firstMsg = groupMsgs[0];
+        const caption = firstMsg.caption || '';
+        const fileTypes = new Set();
 
-    bot.sendMessage(chatId, responseText, {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: "✏️ Изменить", callback_data: "edit_reminder" }],
-                [{ text: "🗑️ Удалить", callback_data: "delete_reminder" }]
-            ]
+        post.remind = {
+            type: 'media_group',
+            media_group_id: firstMsg.media_group_id,
+            items: [],
+            caption: caption
+        };
+
+        const fileProcessingPromises = groupMsgs.map(async (msg) => {
+            try {
+                if (msg.photo) {
+                    fileTypes.add('фото');
+                    const photo = msg.photo[msg.photo.length - 1];
+                    const photoFile = await bot.getFile(photo.file_id);
+                    const photoBuffer = await downloadFile(bot, photoFile);
+                    const uniqueFileName = `photo_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.jpg`;
+                    const photoPath = await saveFile(uniqueFileName, photoBuffer);
+
+                    return {
+                        type: 'photo',
+                        file_id: photoPath
+                    };
+                }
+                else if (msg.video) {
+                    fileTypes.add('видео');
+                    const videoFile = await bot.getFile(msg.video.file_id);
+                    const videoBuffer = await downloadFile(bot, videoFile);
+                    const uniqueFileName = `video_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.mp4`;
+                    const videoPath = await saveFile(uniqueFileName, videoBuffer);
+
+                    return {
+                        type: 'video',
+                        file_id: videoPath
+                    };
+                }
+                else if (msg.document) {
+                    fileTypes.add('документ');
+                    const docFile = await bot.getFile(msg.document.file_id);
+                    const docBuffer = await downloadFile(bot, docFile);
+                    const fileExt = msg.document.file_name?.split('.').pop() || 'bin';
+                    const uniqueFileName = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+                    const docPath = await saveFile(uniqueFileName, docBuffer);
+
+                    return {
+                        type: 'document',
+                        file_id: docPath,
+                        file_name: msg.document.file_name
+                    };
+                }
+            } catch (error) {
+                console.error(`Ошибка обработки файла из медиагруппы:`, error);
+                return null;
+            }
+        });
+
+        const processedItems = await Promise.all(fileProcessingPromises);
+
+        post.remind.items = processedItems.filter(item => item !== null);
+
+        if (post.remind.items.length === 0) {
+            throw new Error('Не удалось сохранить ни одного файла из медиагруппы');
         }
-    });
+
+        const typesStr = Array.from(fileTypes).join(' + ');
+        const responseText = caption
+            ? `🖼️ Напоминание с альбомом (${typesStr}): "${caption}"`
+            : `🖼️ Напоминание с альбомом (${typesStr})`;
+
+        await bot.sendMessage(chatId, responseText, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "✅ Сохранить", callback_data: "save" }],
+                    [{ text: "⬅️ Заполнить заново", callback_data: "back" }]
+                ]
+            }
+        });
+
+        const sendPromises = post.remind.items.map(item =>
+            sendSavedFile(bot, chatId, item).catch(error => {
+                console.error('Ошибка отправки файла:', error);
+            })
+        );
+
+        await Promise.all(sendPromises);
+        console.log(post)
+    } catch (error) {
+        console.error('Ошибка при обработке медиагруппы:', error);
+        await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении медиагруппы');
+    }
+}
+
+async function downloadFile(bot, file) {
+    const fileUrl = await bot.getFileLink(file.file_id);
+    const response = await fetch(fileUrl);
+    return await response.buffer();
+}
+
+async function sendSavedFile(bot, chatId, fileData) {
+    try {
+        const filePath = path.join(__dirname, fileData.file_id);
+        const fileStream = fs.createReadStream(filePath);
+
+        const sendMethods = {
+            photo: 'sendPhoto',
+            video: 'sendVideo',
+            document: 'sendDocument',
+            voice: 'sendVoice',
+            video_note: 'sendVideoNote',
+            sticker: 'sendSticker'
+        };
+
+        const method = sendMethods[fileData.type];
+        if (method) {
+            const options = {
+                caption: fileData.caption || undefined
+            };
+
+            if (fileData.type === 'document' && fileData.file_name) {
+                options.filename = fileData.file_name;
+            }
+
+            await bot[method](chatId, fileStream, options);
+        }
+    } catch (error) {
+        console.error('Ошибка при отправке сохраненного файла:', error);
+    }
 }
 
 function getDiceType(emoji) {
