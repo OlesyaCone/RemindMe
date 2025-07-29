@@ -1,5 +1,5 @@
 export async function showMainMenu(bot, chatId) {
-  bot.removeTextListener(/.*/); 
+
   await bot.sendMessage(chatId, 'Выберите тип напоминания:', {
     reply_markup: {
       inline_keyboard: [

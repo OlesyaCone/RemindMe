@@ -31,7 +31,7 @@ export async function answerHandler(bot, post, callbackQuery) {
         '• Стикер\n• Геолокацию\n• Контакт\n• Опрос'
     );;
 
-    bot.removeTextListener(/.*/);
+    bot.removeTextListener(/.*/); 
 
     const mediaGroups = new Map();
 
@@ -367,4 +367,4 @@ function getDiceType(emoji) {
         '🎰': 'Слот-машина'
     };
     return types[emoji] || 'Игра';
-}
+} 
