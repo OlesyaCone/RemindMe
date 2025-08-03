@@ -15,7 +15,7 @@ async function specificInput(bot, chatId) {
     {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "⬅️Вернуться к списку", callback_data: "back" }]
+          [{ text: "⬅️Вернуться в меню", callback_data: "back" }]
         ]
       }
     }

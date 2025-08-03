@@ -3,6 +3,8 @@ import path from 'path';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
+import { confirmAction } from './confirmAction.js';
+import { CallbackHandler } from './callbackHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const writeFile = promisify(fs.writeFile);
@@ -31,7 +33,7 @@ export async function answerHandler(bot, post, callbackQuery) {
         '• Стикер\n• Геолокацию\n• Контакт\n• Опрос'
     );;
 
-    bot.removeTextListener(/.*/); 
+    bot.removeTextListener(/.*/);
 
     const mediaGroups = new Map();
 
@@ -195,17 +197,12 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 };
         }
 
-        const options = {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: "✅ Сохранить", callback_data: "save" }],
-                    [{ text: "⬅️ Заполнить заново", callback_data: "back" }]
-                ]
-            }
-        };
-
         if (isReminder) {
-            await bot.sendMessage(chatId, responseText, options);
+            await bot.sendMessage(chatId, responseText);
+
+            const callbackHandler = new CallbackHandler(bot);
+            callbackHandler.storePost(post);
+            await confirmAction(bot, post)
 
             if (post.remind.file_id) {
                 await sendSavedFile(bot, chatId, post.remind);
@@ -298,14 +295,11 @@ async function handleMediaGroup(bot, groupMsgs, chatId, post) {
             ? `🖼️ Напоминание с альбомом (${typesStr}): "${caption}"`
             : `🖼️ Напоминание с альбомом (${typesStr})`;
 
-        await bot.sendMessage(chatId, responseText, {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: "✅ Сохранить", callback_data: "save" }],
-                    [{ text: "⬅️ Заполнить заново", callback_data: "back" }]
-                ]
-            }
-        });
+        await bot.sendMessage(chatId, responseText);
+
+        const callbackHandler = new CallbackHandler(bot);
+        callbackHandler.storePost(post);
+        await confirmAction(bot, post);
 
         const sendPromises = post.remind.items.map(item =>
             sendSavedFile(bot, chatId, item).catch(error => {
