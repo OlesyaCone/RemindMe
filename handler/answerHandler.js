@@ -107,7 +107,10 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
 
             case !!msg.document:
                 const docFile = await bot.getFile(msg.document.file_id);
-                const docPath = await saveFile(msg.document.file_id, await downloadFile(bot, docFile));
+                const docBuffer = await downloadFile(bot, docFile);
+                const fileExt = msg.document.file_name?.split('.').pop() || 'bin';
+                const uniqueFileName = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+                const docPath = await saveFile(uniqueFileName, docBuffer);
                 responseText = `📄 Напоминание с документом: ${msg.document.file_name || 'Без названия'}`;
                 post.remind = {
                     type: 'document',
