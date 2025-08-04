@@ -21,12 +21,6 @@ export async function confirmAction(bot, post) {
 
 export async function cancel(bot, post, chatId) {
     try {
-        try {
-            await bot.deleteMessage(chatId, post.messageId);
-        } catch (deleteError) {
-            console.warn(`Не удалось удалить сообщение ${post.messageId}:`, deleteError.message);
-        }
-
         if (post.remind) {
             switch (post.remind.type) {
                 case 'photo':
@@ -35,13 +29,17 @@ export async function cancel(bot, post, chatId) {
                 case 'voice':
                 case 'video_note':
                 case 'sticker':
-                    await deleteFile(post.remind.file_id);
+                    if (post.remind.file_id) {
+                        await deleteFile(post.remind.file_id);
+                    }
                     break;
 
                 case 'media_group':
-                    for (const item of post.remind.items) {
-                        if (item.file_id) {
-                            await deleteFile(item.file_id);
+                    if (post.remind.items) {
+                        for (const item of post.remind.items) {
+                            if (item?.file_id) {
+                                await deleteFile(item.file_id);
+                            }
                         }
                     }
                     break;
@@ -55,16 +53,16 @@ export async function cancel(bot, post, chatId) {
                 ]
             }
         });
-
     } catch (err) {
         console.error('Ошибка при отмене напоминания:', err);
-        await bot.sendMessage(chatId, '⚠️ Произошла ошибка при отмене напоминания');
     }
 }
 
 async function deleteFile(filePath) {
     try {
-        const absolutePath = path.join(__dirname, filePath);
+        const cleanPath = filePath.replace(/^\.\.\//, '');
+        const absolutePath = path.join(filesDir, cleanPath);
+
         if (fs.existsSync(absolutePath)) {
             fs.unlinkSync(absolutePath);
             console.log(`Файл удалён: ${absolutePath}`);
@@ -73,6 +71,7 @@ async function deleteFile(filePath) {
         console.error(`Ошибка при удалении файла ${filePath}:`, err);
     }
 }
-export async function save(bot, post, chatId) { 
-    
+
+export async function save(bot, post, chatId) {
+
 }

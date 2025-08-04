@@ -7,64 +7,75 @@ import { showMainMenu } from './menuUtils.js';
 import { cancel, save } from './confirmAction.js';
 
 export class CallbackHandler {
-    constructor(bot) {
-        this.bot = bot;
-        this.postsStorage = new Map();
-        this.setupCallbacks();
-    }
+constructor(bot) {
+    this.bot = bot;
+    this.postsStorage = new Map();
+    this.clearStorage();
+    this.setupCallbacks();
+}
 
-    setupCallbacks() {
-        this.bot.on('callback_query', async (callbackQuery) => {
-            const data = callbackQuery.data;
-            const chatId = callbackQuery.message.chat.id;
-            const messageId = callbackQuery.message.message_id;
+async clearStorage() {
+    this.postsStorage.clear();
+    console.log('Хранилище напоминаний очищено');
+}
 
-            await this.bot.deleteMessage(chatId, messageId);
+  setupCallbacks() {
+    this.bot.on('callback_query', async (callbackQuery) => {
+      const data = callbackQuery.data;
+      const chatId = callbackQuery.message.chat.id;
+      const messageId = callbackQuery.message.message_id;
 
-            if (data.startsWith('save_') || data.startsWith('cancel_')) {
-                const postId = data.split('_')[1];
-                const post = this.postsStorage.get(postId);
+      try {
+        await this.bot.deleteMessage(chatId, messageId).catch(err => {
+          console.warn(`Не удалось удалить сообщение ${messageId}:`, err.message);
+        });
 
-                if (!post) {
-                    await this.bot.sendMessage(chatId, 'Ошибка: напоминание не найдено');
-                    return;
-                }
+        if (data.startsWith('save_') || data.startsWith('cancel_')) {
+          const postId = data.split('_')[1];
+          const post = this.postsStorage.get(postId);
 
-                if (data.startsWith('save_')) {
-                    await save(this.bot, post, chatId);  
-                } else {
-                    await cancel(this.bot, post, chatId);  
-                }
+          if (!post) {
+            await this.bot.sendMessage(chatId, 'Ошибка: напоминание не найдено или устарело');
+            return;
+          }
 
-                this.postsStorage.delete(postId);
-                return;
-            }
+          if (data.startsWith('save_')) {
+            await save(this.bot, post, chatId);
+          } else {
+            await cancel(this.bot, post, chatId);
+          }
 
+          this.postsStorage.delete(postId);
+          return;
+        }
 
-      switch (data) {
-        case 'daily':
-          await handleDaily(this.bot, callbackQuery);
-          break;
-        case 'specific_date':
-          await handleSpecificDate(this.bot, callbackQuery);
-          break;
-        case 'weekly':
-          await handleWeekly(this.bot, callbackQuery);
-          break;
-        case 'after_time':
-          await handleAfterTime(this.bot, callbackQuery);
-          break;
-        case 'my_reminders':
-          await handleMyReminders(this.bot, callbackQuery);
-          break;
-        case 'back':
-          await showMainMenu(this.bot, chatId);
-          break;
-        default:
-          await this.bot.sendMessage(chatId, 'Неизвестная команда');
+        switch (data) {
+          case 'daily':
+            await handleDaily(this.bot, callbackQuery);
+            break;
+          case 'specific_date':
+            await handleSpecificDate(this.bot, callbackQuery);
+            break;
+          case 'weekly':
+            await handleWeekly(this.bot, callbackQuery);
+            break;
+          case 'after_time':
+            await handleAfterTime(this.bot, callbackQuery);
+            break;
+          case 'my_reminders':
+            await handleMyReminders(this.bot, callbackQuery);
+            break;
+          case 'back':
+            await showMainMenu(this.bot, chatId);
+            break;
+          default:
+            await this.bot.sendMessage(chatId, 'Неизвестная команда');
+        }
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+
+      } catch (err) {
+        console.error('Ошибка обработки callback:', err);
       }
-
-      await this.bot.answerCallbackQuery(callbackQuery.id);
     });
   }
 
