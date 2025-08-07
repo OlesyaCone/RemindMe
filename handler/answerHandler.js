@@ -30,7 +30,7 @@ export async function answerHandler(bot, post, callbackQuery) {
         post.chatId,
         '📝 Введите напоминание. Можно отправить:\n' +
         '• Текст\n• Фото/видео\n• Документ\n• Голосовое\n• Альбом файлов\n' +
-        '• Стикер\n• Геолокацию\n• Контакт\n• Опрос'
+        '• Стикер\n• Геолокацию\n• Контакт\n• Опрос\n‼️Это может занять несколько минут‼️'
     );;
 
     bot.removeTextListener(/.*/);
@@ -203,17 +203,17 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
         if (isReminder) {
             await bot.sendMessage(chatId, responseText);
 
-            const callbackHandler = new CallbackHandler(bot);
-            callbackHandler.storePost(post);
-            await confirmAction(bot, post)
-
             if (post.remind.file_id) {
                 await sendSavedFile(bot, chatId, post.remind);
             }
+
         } else {
             await bot.sendMessage(chatId, responseText);
         }
-
+        const callbackHandler = new CallbackHandler(bot);
+        callbackHandler.storePost(post);
+        await confirmAction(bot, post)
+        
         console.log(post)
     } catch (error) {
         console.error('Ошибка при обработке сообщения:', error);
@@ -300,10 +300,6 @@ async function handleMediaGroup(bot, groupMsgs, chatId, post) {
 
         await bot.sendMessage(chatId, responseText);
 
-        const callbackHandler = new CallbackHandler(bot);
-        callbackHandler.storePost(post);
-        await confirmAction(bot, post);
-
         const sendPromises = post.remind.items.map(item =>
             sendSavedFile(bot, chatId, item).catch(error => {
                 console.error('Ошибка отправки файла:', error);
@@ -311,6 +307,11 @@ async function handleMediaGroup(bot, groupMsgs, chatId, post) {
         );
 
         await Promise.all(sendPromises);
+
+        const callbackHandler = new CallbackHandler(bot);
+        callbackHandler.storePost(post);
+        await confirmAction(bot, post);
+
         console.log(post)
     } catch (error) {
         console.error('Ошибка при обработке медиагруппы:', error);

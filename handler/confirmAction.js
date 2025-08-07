@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getCallbackHandler } from './callbackHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const filesDir = path.join(__dirname, '../files');
@@ -10,18 +11,28 @@ export async function confirmAction(bot, post) {
     await bot.sendMessage(chatId, 'Сохранить это напоминание?', {
         reply_markup: {
             inline_keyboard: [
-                [{ text: "💾 Сохранить", callback_data: "save" }],
-                [{ text: "🚫 Отменить", callback_data: "cancel" }]
+                [{ text: "💾 Сохранить", callback_data: `save_${post.messageId}` }],
+                [{ text: "🚫 Отменить", callback_data: `cancel_${post.messageId}` }]
             ]
         }
     });
 
+    console.log('Подтверждение действия для поста:', post);
     bot.removeTextListener(/.*/);
 }
 
 export async function cancel(bot, post, chatId) {
     try {
+        if (!post) {
+            throw new Error('Пост не передан в cancel()');
+        }
+
+        console.log('Отмена напоминания:', post);
+
         if (post.remind) {
+            const callbackHandler = getCallbackHandler();
+            const clearStorageFn = callbackHandler.getClearStorage();
+            
             switch (post.remind.type) {
                 case 'photo':
                 case 'video':
@@ -29,9 +40,11 @@ export async function cancel(bot, post, chatId) {
                 case 'voice':
                 case 'video_note':
                 case 'sticker':
+                case 'text':
                     if (post.remind.file_id) {
                         await deleteFile(post.remind.file_id);
                     }
+                    await clearStorageFn();
                     break;
 
                 case 'media_group':
@@ -42,6 +55,7 @@ export async function cancel(bot, post, chatId) {
                             }
                         }
                     }
+                    await clearStorageFn();
                     break;
             }
         }
@@ -55,6 +69,7 @@ export async function cancel(bot, post, chatId) {
         });
     } catch (err) {
         console.error('Ошибка при отмене напоминания:', err);
+        await bot.sendMessage(chatId, '⚠️ Произошла ошибка при отмене напоминания');
     }
 }
 
@@ -73,5 +88,22 @@ async function deleteFile(filePath) {
 }
 
 export async function save(bot, post, chatId) {
+    try {
+        if (!post) {
+            throw new Error('Пост не передан в save()');
+        }
 
+        console.log('Сохранение напоминания:', post);
+        
+        await bot.sendMessage(chatId, '✅ Напоминание сохранено!', {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "⬅️ Вернуться в меню", callback_data: "back" }]
+                ]
+            }
+        });
+    } catch (err) {
+        console.error('Ошибка при сохранении напоминания:', err);
+        await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении напоминания');
+    }
 }

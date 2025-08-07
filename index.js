@@ -11,11 +11,11 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const mongoUrl = process.env.MONGO_URL;
 
+export const callbackHandler = new CallbackHandler(bot);
+
 mongoose.connect(mongoUrl)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('Failed to connect to MongoDB:', err));
-
-new CallbackHandler(bot);
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
