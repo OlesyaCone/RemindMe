@@ -1,8 +1,8 @@
-import { handleDaily } from './dailyHandler.js';
-import { handleSpecificDate } from './specificHandler.js';
-import { handleWeekly } from './weeklyHandler.js';
-import { handleAfterTime } from './afterHandler.js';
-import { handleMyReminders } from './remindersHandler.js';
+import { handleDaily } from './data/dailyHandler.js';
+import { handleSpecificDate } from './data/specificHandler.js';
+import { handleWeekly } from './data/weeklyHandler.js';
+import { handleAfterTime } from './data/afterHandler.js';
+import { handleMyReminders } from './data/remindersHandler.js';
 import { showMainMenu } from './menuUtils.js';
 import { cancel, save } from './confirmAction.js';
 

@@ -20,7 +20,7 @@ async function afterInput(bot, chatId) {
       }
     }
   );
-  bot.removeTextListener(/.*/);
+  bot.removeTextListener(/.*/); 
 }
 
 function setupInputHandler(bot, chatId) {
