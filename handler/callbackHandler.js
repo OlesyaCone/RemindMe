@@ -30,6 +30,7 @@ export class CallbackHandler {
   async deleteMessage(chatId, messageId) {
     try {
       await this.bot.deleteMessage(chatId, messageId);
+      console.log(`Сообщение ${messageId} удалено`);
     } catch (err) {
       console.warn(`Не удалось удалить сообщение ${messageId}:`, err.message);
     }
@@ -45,13 +46,16 @@ export class CallbackHandler {
         console.log(`Обработка callback: ${data}, messageId: ${messageId}`);
 
         try {
-          await this.deleteMessage(chatId, messageId);
-
           if (data.startsWith('save_') || data.startsWith('cancel_')) {
-            const postId = data.split('_')[1];
+            const postId = String(data.split('_')[1]);
+            console.log(`Ищем пост с ID: ${postId}`);
+            console.log(`Текущее содержимое хранилища:`, Array.from(this.postsStorage.keys()));
+
             const post = this.postsStorage.get(postId);
 
             if (!post) {
+              console.log('Пост не найден в хранилище');
+              await this.bot.answerCallbackQuery(callbackQuery.id, { text: 'Напоминание не найдено' });
               await this.bot.sendMessage(chatId, 'Ошибка: напоминание не найдено или устарело', {
                 reply_markup: {
                   inline_keyboard: [
@@ -59,18 +63,36 @@ export class CallbackHandler {
                   ]
                 }
               });
+              await this.deleteMessage(chatId, messageId);
               return;
             }
 
-            if (data.startsWith('save_')) {
-              await save(this.bot, post, chatId);
-            } else {
-              await cancel(this.bot, post, chatId);
+            console.log('Пост найден:', post);
+
+            try {
+              if (data.startsWith('save_')) {
+                console.log('Обрабатываем сохранение...');
+                await save(this.bot, post, chatId);
+                await this.bot.answerCallbackQuery(callbackQuery.id, { text: 'Напоминание сохранено' });
+              } else {
+                console.log('Обрабатываем отмену...');
+                await cancel(this.bot, post, chatId);
+                await this.bot.answerCallbackQuery(callbackQuery.id, { text: 'Напоминание отменено' });
+              }
+            } catch (error) {
+              console.error('Ошибка при обработке действия:', error);
+              await this.bot.answerCallbackQuery(callbackQuery.id, { text: 'Произошла ошибка' });
+              throw error;
             }
 
-            this.postsStorage.delete(postId); 
+            this.postsStorage.delete(postId);
+            console.log('Пост удален из хранилища');
+
+            await this.deleteMessage(chatId, messageId);
             return;
           }
+
+          await this.deleteMessage(chatId, messageId);
 
           switch (data) {
             case 'daily':
@@ -98,6 +120,11 @@ export class CallbackHandler {
           await this.bot.answerCallbackQuery(callbackQuery.id);
         } catch (err) {
           console.error('Ошибка обработки callback:', err);
+          try {
+            await this.bot.answerCallbackQuery(callbackQuery.id, { text: 'Ошибка обработки' });
+          } catch (answerError) {
+            console.error('Не удалось ответить на callback:', answerError);
+          }
         }
       });
       this.callbacksSetUp = true;
@@ -105,8 +132,9 @@ export class CallbackHandler {
   }
 
   storePost(post) {
-    this.postsStorage.set(post.messageId, post);
+    this.postsStorage.set(String(post.messageId), post);
     console.log(`Пост сохранён в хранилище: ${post.messageId}`);
+    console.log('Текущее содержимое хранилища:', Array.from(this.postsStorage.keys()));
   }
 }
 

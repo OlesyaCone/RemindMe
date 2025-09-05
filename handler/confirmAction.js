@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { getCallbackHandler } from './callbackHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const filesDir = path.join(__dirname, '../../data/files');
+const filesDir = path.join(__dirname, '../data/files');
 
 export async function confirmAction(bot, post) {
     const chatId = post.chatId;
@@ -94,6 +94,8 @@ export async function save(bot, post, chatId) {
         }
 
         console.log('Сохранение напоминания:', post);
+        console.log('Тип напоминания:', post.remind.type);
+        console.log('Содержимое напоминания:', post.remind);
         
         await bot.sendMessage(chatId, '✅ Напоминание сохранено!', {
             reply_markup: {
@@ -102,8 +104,11 @@ export async function save(bot, post, chatId) {
                 ]
             }
         });
+        
+        console.log('Напоминание успешно сохранено в базе данных');
     } catch (err) {
         console.error('Ошибка при сохранении напоминания:', err);
+        console.error('Стек ошибки:', err.stack);
         await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении напоминания');
     }
 }

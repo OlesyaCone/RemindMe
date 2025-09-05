@@ -2,7 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
-import { CallbackHandler } from './handler/callbackHandler.js';
+import { initCallbackHandler } from './handler/callbackHandler.js'; 
 import { showMainMenu } from './handler/menuUtils.js';
 
 const app = express();
@@ -11,7 +11,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const mongoUrl = process.env.MONGO_URL;
 
-export const callbackHandler = new CallbackHandler(bot);
+initCallbackHandler(bot);
 
 mongoose.connect(mongoUrl)
   .then(() => console.log('Connected to MongoDB'))

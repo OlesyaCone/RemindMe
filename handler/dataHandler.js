@@ -4,21 +4,30 @@ import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
 import { confirmAction } from './confirmAction.js';
-import { CallbackHandler } from './callbackHandler.js';
+import { getCallbackHandler } from './callbackHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
 
-const filesDir = path.join(__dirname, '../files');
-if (!fs.existsSync(filesDir)) {
-    await mkdir(filesDir, { recursive: true });
+const filesDir = path.join(__dirname, '../data/files');
+
+let filesDirInitialized = false;
+
+async function initializeFilesDir() {
+    if (!filesDirInitialized) {
+        if (!fs.existsSync(filesDir)) {
+            await mkdir(filesDir, { recursive: true });
+        }
+        filesDirInitialized = true;
+    }
 }
 
 async function saveFile(fileId, fileData) {
+    await initializeFilesDir();
     const filePath = path.join(filesDir, fileId);
     await writeFile(filePath, fileData);
-    return `../files/${fileId}`;
+    return fileId; 
 }
 
 export async function answerHandler(bot, post, callbackQuery) {
@@ -31,7 +40,7 @@ export async function answerHandler(bot, post, callbackQuery) {
         '📝 Введите напоминание. Можно отправить:\n' +
         '• Текст\n• Фото/видео\n• Документ\n• Голосовое\n• Альбом файлов\n' +
         '• Стикер\n• Геолокацию\n• Контакт\n• Опрос\n‼️Это может занять несколько минут‼️'
-    );;
+    );
 
     bot.removeTextListener(/.*/);
 
@@ -96,7 +105,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 const videoFile = await bot.getFile(msg.video.file_id);
                 const videoPath = await saveFile(msg.video.file_id, await downloadFile(bot, videoFile));
                 responseText = msg.caption
-                    ? `🎥 Напоминание с видео: "${msg.caption}"`
+                    ? `🎥 Наpоминание с видео: "${msg.caption}"`
                     : '🎥 Напоминание с видео';
                 post.remind = {
                     type: 'video',
@@ -203,21 +212,27 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
         if (isReminder) {
             await bot.sendMessage(chatId, responseText);
 
-            if (post.remind.file_id) {
+            if (post.remind.file_id && post.remind.type !== 'text') {
                 await sendSavedFile(bot, chatId, post.remind);
             }
 
         } else {
             await bot.sendMessage(chatId, responseText);
         }
-        const callbackHandler = new CallbackHandler(bot);
-        callbackHandler.storePost(post);
-        await confirmAction(bot, post)
         
-        console.log(post)
+        const callbackHandler = getCallbackHandler();
+        callbackHandler.storePost(post);
+        await confirmAction(bot, post);
+        
+        console.log(post);
     } catch (error) {
         console.error('Ошибка при обработке сообщения:', error);
-        await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении файла');
+
+        if (post.remind && post.remind.type === 'text') {
+            await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении напоминания');
+        } else {
+            await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении файла');
+        }
     }
 }
 
@@ -308,11 +323,11 @@ async function handleMediaGroup(bot, groupMsgs, chatId, post) {
 
         await Promise.all(sendPromises);
 
-        const callbackHandler = new CallbackHandler(bot);
+        const callbackHandler = getCallbackHandler();
         callbackHandler.storePost(post);
         await confirmAction(bot, post);
 
-        console.log(post)
+        console.log(post);
     } catch (error) {
         console.error('Ошибка при обработке медиагруппы:', error);
         await bot.sendMessage(chatId, '⚠️ Произошла ошибка при сохранении медиагруппы');
@@ -327,7 +342,7 @@ async function downloadFile(bot, file) {
 
 async function sendSavedFile(bot, chatId, fileData) {
     try {
-        const filePath = path.join(__dirname, fileData.file_id);
+        const filePath = path.join(filesDir, fileData.file_id);
         const fileStream = fs.createReadStream(filePath);
 
         const sendMethods = {
@@ -365,4 +380,4 @@ function getDiceType(emoji) {
         '🎰': 'Слот-машина'
     };
     return types[emoji] || 'Игра';
-} 
+}
