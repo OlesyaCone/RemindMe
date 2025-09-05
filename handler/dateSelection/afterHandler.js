@@ -1,4 +1,4 @@
-import { answerHandler } from './answerHandler.js';
+import { answerHandler } from '../dataHandler.js';
 
 export async function handleAfterTime(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
@@ -20,7 +20,7 @@ async function afterInput(bot, chatId) {
       }
     }
   );
-  bot.removeTextListener(/.*/); 
+  bot.removeTextListener(/.*/);
 }
 
 function setupInputHandler(bot, chatId) {
@@ -42,6 +42,7 @@ function setupInputHandler(bot, chatId) {
     const post = {
       type: 'after',
       time: reminderTime,
+      messageId: msg.message_id,
       chatId: chatId
     };
 

@@ -3,8 +3,8 @@ import path from 'path';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
-import { confirmAction } from '../confirmAction.js';
-import { CallbackHandler } from '../callbackHandler.js';
+import { confirmAction } from './confirmAction.js';
+import { CallbackHandler } from './callbackHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const writeFile = promisify(fs.writeFile);

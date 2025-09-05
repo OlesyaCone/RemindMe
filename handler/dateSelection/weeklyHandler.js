@@ -1,4 +1,4 @@
-import { answerHandler } from './answerHandler.js';
+import { answerHandler } from '../dataHandler.js';
 
 export async function handleWeekly(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
@@ -41,6 +41,7 @@ function setupInputHandler(bot, chatId) {
       type: 'weekly',
       time: time,
       chatId: chatId,
+      messageId: msg.message_id,
       days: days
     };
 

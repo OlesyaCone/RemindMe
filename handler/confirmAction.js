@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { getCallbackHandler } from './callbackHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const filesDir = path.join(__dirname, '../../data');
+const filesDir = path.join(__dirname, '../../data/files');
 
 export async function confirmAction(bot, post) {
     const chatId = post.chatId;

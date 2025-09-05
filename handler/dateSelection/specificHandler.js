@@ -1,4 +1,4 @@
-import { answerHandler } from './answerHandler.js';
+import { answerHandler } from '../dataHandler.js';
 
 export async function handleSpecificDate(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
@@ -41,6 +41,7 @@ function setupInputHandler(bot, chatId) {
       type: 'specific',
       date: date,
       time: time,
+      messageId: msg.message_id,
       chatId: chatId
     };
 
