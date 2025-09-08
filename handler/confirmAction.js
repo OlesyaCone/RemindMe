@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getCallbackHandler } from './callbackHandler.js';
+import axios from 'axios';
+import api from '../config/api.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const filesDir = path.join(__dirname, '../data/files');
@@ -32,7 +34,7 @@ export async function cancel(bot, post, chatId) {
         if (post.remind) {
             const callbackHandler = getCallbackHandler();
             const clearStorageFn = callbackHandler.getClearStorage();
-            
+
             switch (post.remind.type) {
                 case 'photo':
                 case 'video':
@@ -96,7 +98,11 @@ export async function save(bot, post, chatId) {
         console.log('Сохранение напоминания:', post);
         console.log('Тип напоминания:', post.remind.type);
         console.log('Содержимое напоминания:', post.remind);
-        
+
+        const response = await api.post('/reminds/create', {
+            remind: post.remind
+        });
+
         await bot.sendMessage(chatId, '✅ Напоминание сохранено!', {
             reply_markup: {
                 inline_keyboard: [
@@ -104,8 +110,9 @@ export async function save(bot, post, chatId) {
                 ]
             }
         });
-        
-        console.log('Напоминание успешно сохранено в базе данных');
+
+        console.log('Ответ от сервера:', response.data);
+
     } catch (err) {
         console.error('Ошибка при сохранении напоминания:', err);
         console.error('Стек ошибки:', err.stack);
