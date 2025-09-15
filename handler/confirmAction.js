@@ -2,8 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getCallbackHandler } from './callbackHandler.js';
-import axios from 'axios';
-import api from '../config/api.js';
+import api from '../config/api.js'; 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const filesDir = path.join(__dirname, '../data/files');

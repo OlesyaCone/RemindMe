@@ -1,11 +1,28 @@
+import { MongoClient, ObjectId } from 'mongodb';
+
 class RemindController {
-    async createRemind(req, res) {
-        try {
-            const { remind } = req.body;
-        } catch (err) {
-            console.log('Ошибка в createRemind:', err);
-        }
+
+    async getCollection() {
+        const client = new MongoClient(process.env.MONGO_URL);
+        await client.connect();
+        const database = client.db('Remind');
+        return database.collection('reminds');
     }
+
+    async createRemind(req, res) {
+    try {
+        const { remind } = req.body;
+        const collection = await this.getCollection();
+
+        const result = await collection.insertOne({ remind });
+
+        res.status(201).json(result);
+    } catch (err) {
+        console.log('Ошибка в createRemind:', err);
+        res.status(500).json({ error: 'Не удалось создать напоминание' });
+    }
+}
+
 
     async getRemind(req, res) {
         try {
