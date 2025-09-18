@@ -98,7 +98,7 @@ export async function save(bot, post, chatId) {
         console.log('Тип напоминания:', post.remind.type);
         console.log('Содержимое напоминания:', post.remind);
 
-        const response = await api.post('/reminds/create', {
+        const response = await api.post('/create', {
             remind: post.remind
         });
 
