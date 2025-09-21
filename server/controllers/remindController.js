@@ -45,9 +45,11 @@ class RemindController {
     async getRemind(req, res) {
         try {
             const { chatId } = req.query;
+            console.log(chatId)
             const collection = await this.getCollection();
-            const data = await collection.find({ chatId: chatId }).toArray();
+            const data = await collection.find({ chatId: parseInt(chatId) }).toArray()
             res.json(data);
+            console.log(data)
         } catch (err) {
             console.log(err);
             res.status(500).json({ error: 'Ошибка получения данных' });

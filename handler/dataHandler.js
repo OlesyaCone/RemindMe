@@ -27,7 +27,7 @@ async function saveFile(fileId, fileData) {
     await initializeFilesDir();
     const filePath = path.join(filesDir, fileId);
     await writeFile(filePath, fileData);
-    return fileId; 
+    return fileId;
 }
 
 export async function answerHandler(bot, post, callbackQuery) {
@@ -82,6 +82,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                     : `Вы прислали текст: "${msg.text}"`;
                 post.remind = {
                     type: 'text',
+                    chatId: chatId,
                     content: msg.text,
                     entities: msg.entities || []
                 };
@@ -97,6 +98,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 post.remind = {
                     type: 'photo',
                     file_id: photoPath,
+                    chatId: chatId,
                     caption: msg.caption || '',
                 };
                 break;
@@ -110,6 +112,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 post.remind = {
                     type: 'video',
                     file_id: videoPath,
+                    chatId: chatId,
                     caption: msg.caption || '',
                 };
                 break;
@@ -124,6 +127,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 post.remind = {
                     type: 'document',
                     file_id: docPath,
+                    chatId: chatId,
                     file_name: msg.document.file_name,
                     caption: msg.caption || ''
                 };
@@ -136,6 +140,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 post.remind = {
                     type: 'voice',
                     file_id: voicePath,
+                    chatId: chatId,
                 };
                 break;
 
@@ -146,6 +151,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 post.remind = {
                     type: 'video_note',
                     file_id: videoNotePath,
+                    chatId: chatId,
                 };
                 break;
 
@@ -157,6 +163,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                     type: 'sticker',
                     file_id: stickerPath,
                     emoji: msg.sticker.emoji || '',
+                    chatId: chatId,
                 };
                 break;
 
@@ -164,6 +171,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 responseText = `📍 Локация: ${msg.location.latitude}, ${msg.location.longitude}`;
                 post.remind = {
                     type: 'location',
+                    chatId: chatId,
                     latitude: msg.location.latitude,
                     longitude: msg.location.longitude,
                     live_period: msg.location.live_period || null
@@ -174,6 +182,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 responseText = `👤 Контакт: ${msg.contact.first_name} ${msg.contact.phone_number}`;
                 post.remind = {
                     type: 'contact',
+                    chatId: chatId,
                     phone_number: msg.contact.phone_number,
                     first_name: msg.contact.first_name,
                     last_name: msg.contact.last_name || '',
@@ -185,6 +194,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 responseText = `📊 Опрос: ${msg.poll.question}`;
                 post.remind = {
                     type: 'poll',
+                    chatId: chatId,
                     question: msg.poll.question,
                     options: msg.poll.options.map(opt => opt.text),
                     is_anonymous: msg.poll.is_anonymous,
@@ -197,6 +207,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 responseText = `🎲 ${getDiceType(msg.dice.emoji)}: ${msg.dice.value}`;
                 post.remind = {
                     type: 'dice',
+                    chatId: chatId,
                     emoji: msg.dice.emoji,
                     value: msg.dice.value
                 };
@@ -219,11 +230,11 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
         } else {
             await bot.sendMessage(chatId, responseText);
         }
-        
+
         const callbackHandler = getCallbackHandler();
         callbackHandler.storePost(post);
         await confirmAction(bot, post);
-        
+
         console.log(post);
     } catch (error) {
         console.error('Ошибка при обработке сообщения:', error);
@@ -248,6 +259,7 @@ async function handleMediaGroup(bot, groupMsgs, chatId, post) {
 
         post.remind = {
             type: 'media_group',
+            chatId: chatId,
             media_group_id: firstMsg.media_group_id,
             items: [],
             caption: caption
