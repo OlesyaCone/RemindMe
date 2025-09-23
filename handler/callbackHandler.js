@@ -2,7 +2,7 @@ import { handleDaily } from './dateSelection/dailyHandler.js';
 import { handleSpecificDate } from './dateSelection/specificHandler.js';
 import { handleWeekly } from './dateSelection/weeklyHandler.js';
 import { handleAfterTime } from './dateSelection/afterHandler.js';
-import { handleMyReminders } from './remindersHandler.js';
+import { handleMyReminders, putReminders } from './remindersHandler.js';
 import { showMainMenu } from './menuUtils.js';
 import { cancel, save } from './confirmAction.js';
 
@@ -109,6 +109,12 @@ export class CallbackHandler {
               break;
             case 'my_reminders':
               await handleMyReminders(this.bot, callbackQuery);
+              break;
+            case 'my_reminders':
+              await handleMyReminders(this.bot, callbackQuery);
+              break;
+            case 'put':
+              await putReminders(this.bot, callbackQuery);
               break;
             case 'back':
               await showMainMenu(this.bot, chatId);
