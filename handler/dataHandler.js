@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
 import { confirmAction } from './confirmAction.js';
 import { getCallbackHandler } from './callbackHandler.js';
+import api from '../config/api.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const writeFile = promisify(fs.writeFile);
@@ -35,12 +36,20 @@ export async function answerHandler(bot, post, callbackQuery) {
         await bot.answerCallbackQuery(callbackQuery.id);
     }
 
-    await bot.sendMessage(
-        post.chatId,
-        '📝 Введите напоминание. Можно отправить:\n' +
-        '• Текст\n• Фото/видео\n• Документ\n• Голосовое\n• Альбом файлов\n' +
-        '• Стикер\n• Геолокацию\n• Контакт\n• Опрос\n‼️Это может занять несколько минут‼️'
-    );
+    // ПРОВЕРКА НА РЕЖИМ PUT
+    if (post.put) {
+        await bot.sendMessage(
+            post.chatId,
+            '📝 Отправьте новое содержание напоминания (текст, фото, видео и т.д.)'
+        );
+    } else {
+        await bot.sendMessage(
+            post.chatId,
+            '📝 Введите напоминание. Можно отправить:\n' +
+            '• Текст\n• Фото/видео\n• Документ\n• Голосовое\n• Альбом файлов\n' +
+            '• Стикер\n• Геолокацию\n• Контакт\n• Опрос\n‼️Это может занять несколько минут‼️'
+        );
+    }
 
     bot.removeTextListener(/.*/);
 
@@ -107,7 +116,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 const videoFile = await bot.getFile(msg.video.file_id);
                 const videoPath = await saveFile(msg.video.file_id, await downloadFile(bot, videoFile));
                 responseText = msg.caption
-                    ? `🎥 Наpоминание с видео: "${msg.caption}"`
+                    ? `🎥 Напоминание с видео: "${msg.caption}"`
                     : '🎥 Напоминание с видео';
                 post.remind = {
                     type: 'video',
@@ -220,20 +229,26 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
                 };
         }
 
-        if (isReminder) {
-            await bot.sendMessage(chatId, responseText);
-
-            if (post.remind.file_id && post.remind.type !== 'text') {
-                await sendSavedFile(bot, chatId, post.remind);
+        // РЕЖИМ PUT - отправляем PUT запрос
+        if (post.put && post.remindId) {
+            await api.put(`/reminds/${post.remindId}`, { remind: post.remind });
+            await bot.sendMessage(chatId, '✅ Содержание напоминания обновлено!');
+        } 
+        // РЕЖИМ СОЗДАНИЯ - обычный flow
+        else {
+            if (isReminder) {
+                await bot.sendMessage(chatId, responseText);
+                if (post.remind.file_id && post.remind.type !== 'text') {
+                    await sendSavedFile(bot, chatId, post.remind);
+                }
+            } else {
+                await bot.sendMessage(chatId, responseText);
             }
 
-        } else {
-            await bot.sendMessage(chatId, responseText);
+            const callbackHandler = getCallbackHandler();
+            callbackHandler.storePost(post);
+            await confirmAction(bot, post);
         }
-
-        const callbackHandler = getCallbackHandler();
-        callbackHandler.storePost(post);
-        await confirmAction(bot, post);
 
         console.log(post);
     } catch (error) {
@@ -325,19 +340,27 @@ async function handleMediaGroup(bot, groupMsgs, chatId, post) {
             ? `🖼️ Напоминание с альбомом (${typesStr}): "${caption}"`
             : `🖼️ Напоминание с альбомом (${typesStr})`;
 
-        await bot.sendMessage(chatId, responseText);
+        // РЕЖИМ PUT - отправляем PUT запрос
+        if (post.put && post.remindId) {
+            await api.put(`/reminds/${post.remindId}`, { remind: post.remind });
+            await bot.sendMessage(chatId, '✅ Медиагруппа напоминания обновлена!');
+        } 
+        // РЕЖИМ СОЗДАНИЯ
+        else {
+            await bot.sendMessage(chatId, responseText);
 
-        const sendPromises = post.remind.items.map(item =>
-            sendSavedFile(bot, chatId, item).catch(error => {
-                console.error('Ошибка отправки файла:', error);
-            })
-        );
+            const sendPromises = post.remind.items.map(item =>
+                sendSavedFile(bot, chatId, item).catch(error => {
+                    console.error('Ошибка отправки файла:', error);
+                })
+            );
 
-        await Promise.all(sendPromises);
+            await Promise.all(sendPromises);
 
-        const callbackHandler = getCallbackHandler();
-        callbackHandler.storePost(post);
-        await confirmAction(bot, post);
+            const callbackHandler = getCallbackHandler();
+            callbackHandler.storePost(post);
+            await confirmAction(bot, post);
+        }
 
         console.log(post);
     } catch (error) {

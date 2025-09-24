@@ -1,11 +1,12 @@
 import { answerHandler } from '../dataHandler.js';
+import { updateRemindTime } from '../requests/putReminds.js';
 
-export async function handleDaily(bot, callbackQuery) {
+export async function handleDaily(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
 
   await bot.answerCallbackQuery(callbackQuery.id);
   await dailyInput(bot, chatId);
-  setupInputHandler(bot, chatId);
+  setupInputHandler(bot, chatId, remindId);
 }
 
 async function dailyInput(bot, chatId) {
@@ -23,7 +24,7 @@ async function dailyInput(bot, chatId) {
   bot.removeTextListener(/.*/);
 }
 
-function setupInputHandler(bot, chatId) {
+function setupInputHandler(bot, chatId, remindId = null) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
 
@@ -42,10 +43,16 @@ function setupInputHandler(bot, chatId) {
       type: 'daily',
       time: time,
       messageId: msg.message_id,
-      chatId: chatId
+      chatId: chatId,
+      put: remindId ? true : false,
+      remindId: remindId
     };
 
-    await answerHandler(bot, post);
+    if (post.put) {
+      await updateRemindTime(bot, chatId, remindId, time);
+    } else {
+      await answerHandler(bot, post);
+    }
   };
 
   bot.onText(/.*/, handler);

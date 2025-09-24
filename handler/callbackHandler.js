@@ -2,9 +2,10 @@ import { handleDaily } from './dateSelection/dailyHandler.js';
 import { handleSpecificDate } from './dateSelection/specificHandler.js';
 import { handleWeekly } from './dateSelection/weeklyHandler.js';
 import { handleAfterTime } from './dateSelection/afterHandler.js';
-import { handleMyReminders, putReminders } from './remindersHandler.js';
+import { handleMyReminders } from './remindersHandler.js';
 import { showMainMenu } from './menuUtils.js';
 import { cancel, save } from './confirmAction.js';
+import { putReminds } from './requests/putReminds.js';
 
 export class CallbackHandler {
   constructor(bot) {
@@ -110,15 +111,49 @@ export class CallbackHandler {
             case 'my_reminders':
               await handleMyReminders(this.bot, callbackQuery);
               break;
-            case 'my_reminders':
-              await handleMyReminders(this.bot, callbackQuery);
-              break;
             case 'put':
-              await putReminders(this.bot, callbackQuery);
+              await putReminds(this.bot, chatId);
               break;
             case 'back':
               await showMainMenu(this.bot, chatId);
               break;
+            
+            case String(data.match(/put_(\w+)/)?.input || ''):
+              const remindId = data.split('_')[1];
+              await this.bot.sendMessage(chatId, 'Что изменяем?', {
+                reply_markup: {
+                  inline_keyboard: [
+                    [{ text: '🕰 Изменить время', callback_data: `change_time_${remindId}` }],
+                    [{ text: '📝 Изменить напоминание', callback_data: `change_content_${remindId}` }],
+                    [{ text: '⬅️ Назад', callback_data: 'back_to_reminds' }]
+                  ]
+                }
+              });
+              break;
+
+            case String(data.match(/change_time_(\w+)/)?.input || ''):
+              const timeRemindId = data.split('_')[2];
+              const { handleDaily } = await import('./dateSelection/dailyHandler.js');
+              await handleDaily(this.bot, callbackQuery, timeRemindId);
+              break;
+
+            case String(data.match(/change_content_(\w+)/)?.input || ''):
+              const contentRemindId = data.split('_')[2];
+              const post = {
+                type: 'put_content',
+                remindId: contentRemindId,
+                chatId: chatId,
+                messageId: Date.now(),
+                put: true
+              };
+              const { answerHandler } = await import('./dataHandler.js');
+              await answerHandler(this.bot, post);
+              break;
+
+            case 'back_to_reminds':
+              await putReminds(this.bot, chatId);
+              break;
+
             default:
               await this.bot.sendMessage(chatId, 'Неизвестная команда');
           }

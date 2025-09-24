@@ -35,7 +35,7 @@ export async function putReminders(bot, callbackQuery) {
 
   await bot.sendMessage(
     chatId,
-    'Выберете напоминание'
+    'Выбран режим изменения напоминаний📝'
   );
 
   await putReminds(bot, chatId);

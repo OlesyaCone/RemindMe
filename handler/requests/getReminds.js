@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import api from '../../config/api.js';  
+import api from '../../config/api.js';
+import remindsStorage from './remindsStorage.js';
 
 const filesDir = path.resolve(process.cwd(), 'data/files');
 
@@ -8,6 +9,7 @@ export async function getReminds(bot, chatId) {
   try {
     const response = await api.get('/reminds', { params: { chatId } });
     const reminds = response.data;
+    remindsStorage.setReminds(chatId, reminds);
 
     if (!reminds || reminds.length === 0) {
       await bot.sendMessage(chatId, '📭 Нет напоминаний');
