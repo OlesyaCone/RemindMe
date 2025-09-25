@@ -1,17 +1,18 @@
 import { answerHandler } from '../dataHandler.js';
+import { updateRemindTime } from '../requests/putReminds.js';
 
-export async function handleWeekly(bot, callbackQuery) {
+export async function handleWeekly(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
 
   await bot.answerCallbackQuery(callbackQuery.id);
   await weeklyInput(bot, chatId);
-  setupInputHandler(bot, chatId);
+  setupInputHandler(bot, chatId, remindId);
 }
 
 async function weeklyInput(bot, chatId) {
   await bot.sendMessage(
     chatId,
-    'Вы выбрали еженедельное напоминание. Укажите дни недели и время. Например: \nпн, вт 15:00\nвс 02:00\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате',
+    'Вы выбрали еженедельное напоминание. Укажите дни недели и время. Например: \nпн, вт 15:00\nвс 02:00',
     {
       reply_markup: {
         inline_keyboard: [
@@ -20,10 +21,9 @@ async function weeklyInput(bot, chatId) {
       }
     }
   );
-  bot.removeTextListener(/.*/);
 }
 
-function setupInputHandler(bot, chatId) {
+function setupInputHandler(bot, chatId, remindId = null) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
 
@@ -35,25 +35,39 @@ function setupInputHandler(bot, chatId) {
     }
 
     const { days, time } = parseInput(msg.text);
-    bot.removeTextListener(handler);
+    bot.removeListener('text', handler);
     await bot.sendMessage(chatId, `Напоминание будет установлено на ${days.join(', ')} ${time}`);
     const post = {
       type: 'weekly',
       time: time,
       chatId: chatId,
       messageId: msg.message_id,
-      days: days
+      days: days,
+      put: remindId ? true : false,
+      remindId: remindId
     };
 
-    await answerHandler(bot, post);
+    if (post.put) {
+      await updateRemindTime(bot, chatId, remindId, time);
+    } else {
+      await answerHandler(bot, post);
+    }
   };
 
-  bot.onText(/.*/, handler);
+  bot.on('text', handler);
 }
 
 function checkInput(text) {
   const trimmed = text.trim();
   const parts = trimmed.split(' ');
+  
+  if (parts.length < 2) {
+    return {
+      valid: false,
+      error: 'Неверный формат. Пример: пн, ср, пт 15:00\nДоступные дни: пн, вт, ср, чт, пт, сб, вс\nВремя: ЧЧ:MM (24ч)\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате'
+    };
+  }
+
   const time = parts.pop();
   const days = parts.join(' ');
 
@@ -81,14 +95,17 @@ function parseInput(text) {
 
 function checkTime(time) {
   const [hours, mins] = time.split(':');
-  return (
-    hours >= 0 && hours <= 23 &&
-    mins >= 0 && mins <= 59
-  );
+  const h = Number(hours), m = Number(mins);
+  return Number.isInteger(h) && Number.isInteger(m) && h >= 0 && h <= 23 && m >= 0 && m <= 59;
 }
 
 function checkDays(days) {
   const week = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
   const inputDays = days.split(',').map(day => day.trim());
+  
+  if (inputDays.length === 0 || inputDays.some(day => day === '')) {
+    return false;
+  }
+  
   return inputDays.every(day => week.includes(day));
 }

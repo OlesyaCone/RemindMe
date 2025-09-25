@@ -1,11 +1,12 @@
 import { answerHandler } from '../dataHandler.js';
+import { updateRemindTime } from '../requests/putReminds.js';
 
-export async function handleSpecificDate(bot, callbackQuery) {
+export async function handleSpecificDate(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
 
   await bot.answerCallbackQuery(callbackQuery.id);
   await specificInput(bot, chatId);
-  setupInputHandler(bot, chatId);
+  setupInputHandler(bot, chatId, remindId);
 }
 
 async function specificInput(bot, chatId) {
@@ -20,10 +21,9 @@ async function specificInput(bot, chatId) {
       }
     }
   );
-  bot.removeTextListener(/.*/);
 }
 
-function setupInputHandler(bot, chatId) {
+function setupInputHandler(bot, chatId, remindId = null) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
 
@@ -35,20 +35,26 @@ function setupInputHandler(bot, chatId) {
     }
 
     const { date, time } = parseInput(msg.text);
-    bot.removeTextListener(handler);
+    bot.removeListener('text', handler);
     await bot.sendMessage(chatId, `Напоминание будет установлено на: ${date} ${time}`);
     const post = {
       type: 'specific',
       date: date,
       time: time,
       messageId: msg.message_id,
-      chatId: chatId
+      chatId: chatId,
+      put: remindId ? true : false,
+      remindId: remindId
     };
 
-    await answerHandler(bot, post);
+    if (post.put) {
+      await updateRemindTime(bot, chatId, remindId, time, date);
+    } else {
+      await answerHandler(bot, post);
+    }
   };
 
-  bot.onText(/.*/, handler);
+  bot.on('text', handler);
 }
 
 function checkInput(text) {
@@ -84,10 +90,8 @@ function parseInput(text) {
 
 function checkTime(time) {
   const [hours, mins] = time.split(':');
-  return (
-    hours >= 0 && hours <= 23 &&
-    mins >= 0 && mins <= 59
-  );
+  const h = Number(hours), m = Number(mins);
+  return Number.isInteger(h) && Number.isInteger(m) && h >= 0 && h <= 23 && m >= 0 && m <= 59;
 }
 
 function checkDate(date) {
@@ -102,6 +106,14 @@ function checkDate(date) {
   if (month === 2) {
     const isLeap = (year % 400 === 0) || (year % 100 !== 0 && year % 4 === 0);
     if (day > (isLeap ? 29 : 28)) return false;
+  }
+
+  const inputDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (inputDate < today) {
+    return false;
   }
 
   return true;

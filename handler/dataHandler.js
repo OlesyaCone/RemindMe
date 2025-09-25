@@ -36,11 +36,12 @@ export async function answerHandler(bot, post, callbackQuery) {
         await bot.answerCallbackQuery(callbackQuery.id);
     }
 
-    // ПРОВЕРКА НА РЕЖИМ PUT
     if (post.put) {
         await bot.sendMessage(
             post.chatId,
-            '📝 Отправьте новое содержание напоминания (текст, фото, видео и т.д.)'
+            '📝 Введите напоминание. Можно отправить:\n' +
+            '• Текст\n• Фото/видео\n• Документ\n• Голосовое\n• Альбом файлов\n' +
+            '• Стикер\n• Геолокацию\n• Контакт\n• Опрос\n‼️Это может занять несколько минут‼️'
         );
     } else {
         await bot.sendMessage(
@@ -233,7 +234,7 @@ async function handleUniversalMessage(bot, msg, isReminder = false, post) {
         if (post.put && post.remindId) {
             await api.put(`/reminds/${post.remindId}`, { remind: post.remind });
             await bot.sendMessage(chatId, '✅ Содержание напоминания обновлено!');
-        } 
+        }
         // РЕЖИМ СОЗДАНИЯ - обычный flow
         else {
             if (isReminder) {
@@ -340,12 +341,10 @@ async function handleMediaGroup(bot, groupMsgs, chatId, post) {
             ? `🖼️ Напоминание с альбомом (${typesStr}): "${caption}"`
             : `🖼️ Напоминание с альбомом (${typesStr})`;
 
-        // РЕЖИМ PUT - отправляем PUT запрос
         if (post.put && post.remindId) {
             await api.put(`/reminds/${post.remindId}`, { remind: post.remind });
             await bot.sendMessage(chatId, '✅ Медиагруппа напоминания обновлена!');
-        } 
-        // РЕЖИМ СОЗДАНИЯ
+        }
         else {
             await bot.sendMessage(chatId, responseText);
 

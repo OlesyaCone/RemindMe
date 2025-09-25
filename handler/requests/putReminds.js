@@ -13,11 +13,21 @@ export async function putReminds(bot, chatId) {
 
     for (let i = 0; i < reminds.length; i++) {
         const item = reminds[i];
-        const remind = item.remind || item;
+        const remindObj = item.remind || item;
+
+        const id = item._id || remindObj._id || item.id || remindObj.id || null;
+        if (!id) {
+            console.warn(`Напоминание без id (index ${i}):`, item);
+            inline_keyboard.push([{
+                text: String(i + 1) + ' ⚠️',
+                callback_data: `put_missing_${i}`
+            }]);
+            continue;
+        }
 
         inline_keyboard.push([{
             text: String(i + 1),
-            callback_data: `put_${remind._id}`
+            callback_data: `put_${id}`
         }]);
     }
 

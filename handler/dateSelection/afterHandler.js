@@ -1,11 +1,12 @@
 import { answerHandler } from '../dataHandler.js';
+import { updateRemindTime } from '../requests/putReminds.js';
 
-export async function handleAfterTime(bot, callbackQuery) {
+export async function handleAfterTime(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
 
   await bot.answerCallbackQuery(callbackQuery.id);
   await afterInput(bot, chatId);
-  setupInputHandler(bot, chatId);
+  setupInputHandler(bot, chatId, remindId);
 }
 
 async function afterInput(bot, chatId) {
@@ -20,10 +21,9 @@ async function afterInput(bot, chatId) {
       }
     }
   );
-  bot.removeTextListener(/.*/);
 }
 
-function setupInputHandler(bot, chatId) {
+function setupInputHandler(bot, chatId, remindId = null) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
 
@@ -36,20 +36,26 @@ function setupInputHandler(bot, chatId) {
       return;
     }
 
-    bot.removeTextListener(handler);
+    bot.removeListener('text', handler);
     const reminderTime = addTimeToCurrent(hour, minute);
     await bot.sendMessage(chatId, `Напоминание будет через ${hour}ч ${minute}мин`);
     const post = {
       type: 'after',
       time: reminderTime,
       messageId: msg.message_id,
-      chatId: chatId
+      chatId: chatId,
+      put: remindId ? true : false,
+      remindId: remindId
     };
 
-    await answerHandler(bot, post);
+    if (post.put) {
+      await updateRemindTime(bot, chatId, remindId, reminderTime);
+    } else {
+      await answerHandler(bot, post);
+    }
   };
 
-  bot.onText(/.*/, handler);
+  bot.on('text', handler);
 }
 
 function checkInput(text) {
@@ -79,8 +85,11 @@ function checkInput(text) {
     };
   }
 
+  let hourNum = 0;
+  let minuteNum = 0;
+
   if (minute !== undefined) {
-    const minuteNum = parseInt(minute);
+    minuteNum = parseInt(minute);
     if (isNaN(minuteNum) || !checkMin(minuteNum)) {
       return {
         valid: false,
@@ -95,8 +104,8 @@ function checkInput(text) {
   }
 
   if (hours !== undefined) {
-    const hoursNum = parseInt(hours);
-    const [isNegative, isTooLarge] = checkHour(hoursNum);
+    hourNum = parseInt(hours);
+    const [isNegative, isTooLarge] = checkHour(hourNum);
     if (isNegative || isTooLarge) {
       return {
         valid: false,
@@ -112,8 +121,8 @@ function checkInput(text) {
 
   return {
     valid: true,
-    hour: hours ? parseInt(hours) : 0,
-    minute: minute ? parseInt(minute) : 0
+    hour: hourNum,
+    minute: minuteNum
   };
 }
 
