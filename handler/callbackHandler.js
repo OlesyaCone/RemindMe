@@ -193,8 +193,7 @@ export class CallbackHandler {
                     [{ text: "⏰ Ежедневно", callback_data: `put_daily_${remindId}` }],
                     [{ text: "📅 В определенную дату", callback_data: `put_specific_${remindId}` }],
                     [{ text: "🔄 По дням недели", callback_data: `put_weekly_${remindId}` }],
-                    [{ text: "⏱️ Через несколько минут/часов", callback_data: `put_after_${remindId}` }],
-                    [{ text: "❌ Отмена", callback_data: 'cancel_put' }]
+                    [{ text: "⏱️ Через несколько минут/часов", callback_data: `put_after_${remindId}` }]
                   ]
                 }
               }
