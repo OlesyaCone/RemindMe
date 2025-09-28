@@ -106,7 +106,7 @@ export class CallbackHandler {
             const remindId = m ? m[1] : null;
             if (!remindId || remindId === 'undefined') {
               console.warn('Попытка изменить напоминание без id:', data);
-              await this.bot.sendMessage(chatId, '❗ Невозможно изменить это напоминание — отсутствует идентификатор.');
+              await this.bot.sendMessage(chatId, '❗ Невозможно изменить это напоминание — отсутствует идентификатор.' );
               break;
             }
             await this.bot.sendMessage(chatId, 'Что изменяем?', {
@@ -160,7 +160,7 @@ export class CallbackHandler {
           case /^change_content_(.+)$/.test(data): {
             const contentRemindId = data.match(/^change_content_(.+)$/)[1];
             if (!contentRemindId) {
-              await this.bot.sendMessage(chatId, '❗ Невозможно изменить содержание — отсутствует идентификатор.');
+              await this.bot.sendMessage(chatId, '❗ Невозможно изменить содержание — отсутствует идентификатор.' );
               break;
             }
             const post = {
@@ -196,8 +196,19 @@ export class CallbackHandler {
   }
 
   storePost(post) {
-    this.postsStorage.set(String(post.messageId), post);
-    console.log(`Пост сохранён в хранилище: ${post.messageId}`);
+    if (!post || !post.messageId) {
+      console.warn('Попытка сохранить некорректный пост:', post);
+      return;
+    }
+    const key = String(post.messageId);
+
+    if (this.postsStorage.has(key)) {
+      console.log(`Пост ${key} уже есть в хранилище, повторное сохранение пропущено`);
+      return;
+    }
+
+    this.postsStorage.set(key, post);
+    console.log(`Пост сохранён в хранилище: ${key}`);
     console.log('Текущее содержимое хранилища:', Array.from(this.postsStorage.keys()));
   }
 }

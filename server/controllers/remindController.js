@@ -5,7 +5,7 @@ import { resolve } from 'path';
 config({ path: resolve(process.cwd(), '.env') });
 
 class RemindController {
-    client = null; 
+    client = null;
 
     async getCollection() {
         try {
@@ -14,40 +14,39 @@ class RemindController {
                 await this.client.connect();
                 console.log('Connected to MongoDB');
             }
-            
-            const database = this.client.db('Remind'); 
+
+            const database = this.client.db('Remind');
             return database.collection('reminds');
         } catch (error) {
             console.log('Ошибка подключения к MongoDB:', error);
-            throw error; 
+            throw error;
         }
     }
 
     async createRemind(req, res) {
         try {
-            const { remind } = req.body;
-            console.log('Содержимое напоминания:', remind);
-            
+            const post = req.body; 
+            console.log('Сохраняем пост целиком:', post);
+
             const collection = await this.getCollection();
-            const result = await collection.insertOne(remind); 
-            
-            res.json({ 
-                success: true, 
-                id: result.insertedId 
-            });
-            
+            const result = await collection.insertOne(post);
+
+            res.json({ success: true, id: result.insertedId });
         } catch (err) {
-            console.log('Ошибка в createRemind:', err);
+            console.error('Ошибка в createRemind:', err);
             res.status(500).json({ error: err.message });
         }
     }
 
+
     async getRemind(req, res) {
         try {
             const { chatId } = req.query;
-            console.log(chatId)
+            console.log('Получение напоминаний для chatId=', chatId);
             const collection = await this.getCollection();
-            const data = await collection.find({ chatId: parseInt(chatId) }).toArray()
+            const filter = isNaN(Number(chatId)) ? { chatId } : { chatId: Number(chatId) };
+
+            const data = await collection.find(filter).toArray();
             res.json(data);
             console.log(data)
         } catch (err) {
@@ -79,7 +78,7 @@ class RemindController {
                 { $set: updates },
                 { returnDocument: 'after' }
             );
-            
+
             res.json(result.value);
         } catch (err) {
             console.log(err);
