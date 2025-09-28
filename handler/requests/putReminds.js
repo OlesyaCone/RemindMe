@@ -15,11 +15,13 @@ export async function putReminds(bot, chatId) {
         const item = reminds[i];
         const remindObj = item.remind || item;
 
-        const id = item._id || remindObj._id || item.id || remindObj.id || null;
+        const rawId = item._id || remindObj._id || item.id || remindObj.id;
+        const id = rawId && rawId.toString ? rawId.toString() : null;
+
         if (!id) {
-            console.warn(`Напоминание без id (index ${i}):`, item);
+            console.warn(`Напоминание без корректного id (index ${i}):`, item);
             inline_keyboard.push([{
-                text: String(i + 1) + ' ⚠️',
+                text: `${i + 1} ⚠️`,
                 callback_data: `put_missing_${i}`
             }]);
             continue;
@@ -40,22 +42,29 @@ export async function putReminds(bot, chatId) {
     );
 }
 
-export async function updateRemindTime(bot, chatId, remindId, newTime) {
-    try {
-        await api.put(`/reminds/${remindId}`, { time: newTime });
-        await bot.sendMessage(chatId, '✅ Время напоминания обновлено!');
-    } catch (error) {
-        console.error('Ошибка обновления времени:', error);
-        await bot.sendMessage(chatId, '❌ Ошибка обновления времени');
-    }
-}
-
 export async function updateRemindContent(bot, chatId, remindId, newContent) {
     try {
-        await api.put(`/reminds/${remindId}`, { content: newContent });
+        await api.put(`/reminds/${remindId}`, { 
+            content: newContent 
+        });
         await bot.sendMessage(chatId, '✅ Содержание напоминания обновлено!');
     } catch (error) {
         console.error('Ошибка обновления содержания:', error);
         await bot.sendMessage(chatId, '❌ Ошибка обновления содержания');
+    }
+}
+
+export async function updateRemindTime(bot, chatId, remindId, newTime, type = 'daily') {
+    try {
+        await api.put(`/reminds/${remindId}`, { 
+            remind: {
+                type: type,
+                time: newTime
+            }
+        });
+        await bot.sendMessage(chatId, '✅ Время напоминания обновлено!');
+    } catch (error) {
+        console.error('Ошибка обновления времени:', error);
+        await bot.sendMessage(chatId, '❌ Ошибка обновления времени');
     }
 }

@@ -1,5 +1,6 @@
 import { getReminds } from "./requests/getReminds.js";
-import {putReminds} from "./requests/putReminds.js"
+import {putReminds} from "./requests/putReminds.js";
+import {deleteReminds} from "./requests/deleteReminds.js"
 
 export async function handleMyReminders(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
@@ -39,5 +40,17 @@ export async function putReminders(bot, callbackQuery) {
   );
 
   await putReminds(bot, chatId);
+}
 
+export async function deleteReminders(bot, callbackQuery) {
+  const chatId = callbackQuery.message.chat.id;
+
+  await bot.answerCallbackQuery(callbackQuery.id);
+
+  await bot.sendMessage(
+    chatId,
+    'Выбран режим удаления напоминаний📝'
+  );
+
+  await deleteReminds(bot, chatId);
 }

@@ -25,7 +25,7 @@ class RemindController {
 
     async createRemind(req, res) {
         try {
-            const post = req.body; 
+            const post = req.body;
             console.log('Сохраняем пост целиком:', post);
 
             const collection = await this.getCollection();
@@ -37,7 +37,6 @@ class RemindController {
             res.status(500).json({ error: err.message });
         }
     }
-
 
     async getRemind(req, res) {
         try {
@@ -70,18 +69,67 @@ class RemindController {
     async putRemind(req, res) {
         try {
             const { id } = req.params;
+            console.log('PUT запрос для ID:', id);
+
+            if (!ObjectId.isValid(id)) {
+                console.log('Некорректный ID:', id);
+                return res.status(400).json({ error: 'Некорректный идентификатор' });
+            }
+
             const updates = req.body;
+            console.log('Обновление напоминания:', { id, updates });
+
             const collection = await this.getCollection();
+            
+            const existingRemind = await collection.findOne({ _id: new ObjectId(id) });
+            console.log('Найденное напоминание:', existingRemind);
+            
+            if (!existingRemind) {
+                console.log('Напоминание не найдено в базе');
+                return res.status(404).json({ error: 'Напоминание не найдено' });
+            }
+
+            const setUpdates = {};
+            
+            if (updates.content !== undefined) {
+                setUpdates.content = updates.content;
+            }
+            
+            if (updates.remind) {
+                if (updates.remind.type !== undefined) {
+                    setUpdates['remind.type'] = updates.remind.type;
+                }
+                if (updates.remind.content !== undefined) {
+                    setUpdates['remind.content'] = updates.remind.content;
+                }
+                if (updates.remind.time !== undefined) {
+                    setUpdates['remind.time'] = updates.remind.time;
+                }
+                if (updates.remind.file_id !== undefined) {
+                    setUpdates['remind.file_id'] = updates.remind.file_id;
+                }
+                if (updates.remind.caption !== undefined) {
+                    setUpdates['remind.caption'] = updates.remind.caption;
+                }
+            }
+
+            console.log('Применяемые обновления:', setUpdates);
 
             const result = await collection.findOneAndUpdate(
                 { _id: new ObjectId(id) },
-                { $set: updates },
+                { $set: setUpdates },
                 { returnDocument: 'after' }
             );
 
+            if (!result.value) {
+                console.log('Напоминание не найдено после обновления');
+                return res.status(404).json({ error: 'Напоминание не найдено' });
+            }
+
+            console.log('Успешно обновлено:', result.value);
             res.json(result.value);
         } catch (err) {
-            console.log(err);
+            console.error('Ошибка обновления:', err);
             res.status(500).json({ error: 'Ошибка обновления' });
         }
     }

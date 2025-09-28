@@ -7,6 +7,9 @@ import { showMainMenu } from './menuUtils.js';
 import { cancel, save } from './confirmAction.js';
 import { putReminds } from './requests/putReminds.js';
 import { answerHandler } from './dataHandler.js';
+import { deleteReminds } from './requests/deleteReminds.js';
+import remindsStorage from './requests/remindsStorage.js';
+import api from '../config/api.js';
 
 export class CallbackHandler {
   constructor(bot) {
@@ -97,16 +100,64 @@ export class CallbackHandler {
             await putReminds(this.bot, chatId);
             break;
 
+          case data === 'delete':
+            await deleteReminds(this.bot, chatId);
+            break;
+
           case data === 'back':
             await showMainMenu(this.bot, chatId);
             break;
+
+          case data === 'cancel_delete':
+            await showMainMenu(this.bot, chatId);
+            break;
+
+          case /^delete_(.+)$/.test(data): {
+            const remindId = data.match(/^delete_(.+)$/)[1];
+            if (!remindId || remindId === 'undefined') {
+              console.warn('Попытка удалить напоминание без id:', data);
+              await this.bot.sendMessage(chatId, '❗ Невозможно удалить это напоминание — отсутствует идентификатор.');
+              break;
+            }
+            
+            try {
+              await this.bot.answerCallbackQuery(callbackQuery.id, {
+                text: 'Удаляем напоминание...'
+              });
+
+              const response = await api.delete(`/reminds/${remindId}`);
+              
+              if (response.status === 200) {
+                const reminds = remindsStorage.getReminds(chatId);
+                const updatedReminds = reminds.filter(remind => {
+                  const id = remind._id || remind.id;
+                  return id && id.toString() !== remindId;
+                });
+                remindsStorage.setReminds(chatId, updatedReminds);
+
+                await this.bot.sendMessage(
+                  chatId,
+                  '✅ Напоминание успешно удалено!'
+                );
+              } else {
+                throw new Error('Ошибка при удалении');
+              }
+            } catch (error) {
+              console.error('Ошибка при удалении напоминания:', error);
+              await this.bot.sendMessage(
+                chatId,
+                '❌ Произошла ошибка при удалении напоминания. Попробуйте снова.'
+              );
+            }
+            break;
+          }
 
           case /^put_(.+)$/.test(data): {
             const m = data.match(/^put_(.+)$/);
             const remindId = m ? m[1] : null;
             if (!remindId || remindId === 'undefined') {
               console.warn('Попытка изменить напоминание без id:', data);
-              await this.bot.sendMessage(chatId, '❗ Невозможно изменить это напоминание — отсутствует идентификатор.' );
+              await this.bot.sendMessage(chatId, '❗ Невозможно изменить это напоминание — отсутствует идентификатор.');
               break;
             }
             await this.bot.sendMessage(chatId, 'Что изменяем?', {
@@ -160,7 +211,7 @@ export class CallbackHandler {
           case /^change_content_(.+)$/.test(data): {
             const contentRemindId = data.match(/^change_content_(.+)$/)[1];
             if (!contentRemindId) {
-              await this.bot.sendMessage(chatId, '❗ Невозможно изменить содержание — отсутствует идентификатор.' );
+              await this.bot.sendMessage(chatId, '❗ Невозможно изменить содержание — отсутствует идентификатор.');
               break;
             }
             const post = {
