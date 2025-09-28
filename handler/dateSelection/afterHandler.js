@@ -1,5 +1,5 @@
 import { answerHandler } from '../dataHandler.js';
-import { updateRemindTime } from '../requests/putReminds.js';
+import api from '../../config/api.js';
 
 export async function handleAfterTime(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
@@ -27,30 +27,39 @@ function setupInputHandler(bot, chatId, remindId = null) {
   const handler = async (msg) => {
     if (msg.chat.id !== chatId) return;
 
-    const { valid, error, markup, hour = 0, minute = 0 } = checkInput(msg.text);
+    const { valid, error, hour = 0, minute = 0 } = checkInput(msg.text);
 
     if (!valid) {
-      await bot.sendMessage(chatId, error, {
-        reply_markup: markup
-      });
+      await bot.sendMessage(chatId, error);
       return;
     }
 
     bot.removeListener('text', handler);
     const reminderTime = addTimeToCurrent(hour, minute);
     await bot.sendMessage(chatId, `Напоминание будет через ${hour}ч ${minute}мин`);
-    const post = {
-      type: 'after',
-      time: reminderTime,
-      messageId: msg.message_id,
-      chatId: chatId,
-      put: remindId ? true : false,
-      remindId: remindId
-    };
-
-    if (post.put) {
-      await updateRemindTime(bot, chatId, remindId, reminderTime);
+    
+    if (remindId) {
+      try {
+        await api.put(`/reminds/${remindId}`, {
+          remind: {
+            type: 'after',
+            time: reminderTime
+          }
+        });
+        await bot.sendMessage(chatId, '✅ Время напоминания обновлено!');
+      } catch (error) {
+        console.error('Ошибка обновления времени:', error);
+        await bot.sendMessage(chatId, '❌ Ошибка обновления времени');
+      }
     } else {
+      const post = {
+        type: 'after',
+        time: reminderTime,
+        messageId: msg.message_id,
+        chatId: chatId,
+        put: false,
+        remindId: null
+      };
       await answerHandler(bot, post);
     }
   };
@@ -62,12 +71,7 @@ function checkInput(text) {
   if (!text.trim()) {
     return {
       valid: false,
-      error: 'Введите время в формате: "30мин 2ч" или "1ч 15мин"\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате',
-      markup: {
-        inline_keyboard: [
-          [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
-        ]
-      }
+      error: 'Введите время в формате: "30мин 2ч" или "1ч 15мин"\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате'
     };
   }
 
@@ -76,12 +80,7 @@ function checkInput(text) {
   if (minute === undefined && hours === undefined) {
     return {
       valid: false,
-      error: 'Неверный формат. Укажите минуты (0-59) или часы (0-23). Например:\n0ч 14мин\nИЛИ\n1ч 17мин\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате',
-      markup: {
-        inline_keyboard: [
-          [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
-        ]
-      }
+      error: 'Неверный формат. Укажите минуты (0-59) или часы (0-23). Например:\n0ч 14мин\nИЛИ\n1ч 17мин\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате'
     };
   }
 
@@ -93,12 +92,7 @@ function checkInput(text) {
     if (isNaN(minuteNum) || !checkMin(minuteNum)) {
       return {
         valid: false,
-        error: 'Некорректное количество минут. Должно быть от 0 до 59\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате',
-        markup: {
-          inline_keyboard: [
-            [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
-          ]
-        }
+        error: 'Некорректное количество минут. Должно быть от 0 до 59\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате'
       };
     }
   }
@@ -109,12 +103,7 @@ function checkInput(text) {
     if (isNegative || isTooLarge) {
       return {
         valid: false,
-        error: 'Некорректное количество часов. Должно быть от 0 до 23\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате',
-        markup: {
-          inline_keyboard: [
-            [{ text: "📅 В определенную дату", callback_data: "specific_date" }]
-          ]
-        }
+        error: 'Некорректное количество часов. Должно быть от 0 до 23\n\n🔄Попробуйте еще раз\n✅Просто отправьте время в правильном формате'
       };
     }
   }

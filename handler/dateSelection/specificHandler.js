@@ -1,5 +1,5 @@
 import { answerHandler } from '../dataHandler.js';
-import { updateRemindTime } from '../requests/putReminds.js';
+import api from '../../config/api.js';
 
 export async function handleSpecificDate(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
@@ -37,19 +37,31 @@ function setupInputHandler(bot, chatId, remindId = null) {
     const { date, time } = parseInput(msg.text);
     bot.removeListener('text', handler);
     await bot.sendMessage(chatId, `Напоминание будет установлено на: ${date} ${time}`);
-    const post = {
-      type: 'specific',
-      date: date,
-      time: time,
-      messageId: msg.message_id,
-      chatId: chatId,
-      put: remindId ? true : false,
-      remindId: remindId
-    };
-
-    if (post.put) {
-      await updateRemindTime(bot, chatId, remindId, time, date);
+    
+    if (remindId) {
+      try {
+        await api.put(`/reminds/${remindId}`, {
+          remind: {
+            type: 'specific',
+            time: time,
+            date: date
+          }
+        });
+        await bot.sendMessage(chatId, '✅ Время напоминания обновлено!');
+      } catch (error) {
+        console.error('Ошибка обновления времени:', error);
+        await bot.sendMessage(chatId, '❌ Ошибка обновления времени');
+      }
     } else {
+      const post = {
+        type: 'specific',
+        date: date,
+        time: time,
+        messageId: msg.message_id,
+        chatId: chatId,
+        put: false,
+        remindId: null
+      };
       await answerHandler(bot, post);
     }
   };

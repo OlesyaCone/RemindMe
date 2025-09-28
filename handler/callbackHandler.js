@@ -109,6 +109,7 @@ export class CallbackHandler {
             break;
 
           case data === 'cancel_delete':
+          case data === 'cancel_put':
             await showMainMenu(this.bot, chatId);
             break;
 
@@ -153,42 +154,69 @@ export class CallbackHandler {
           }
 
           case /^put_(.+)$/.test(data): {
-            const m = data.match(/^put_(.+)$/);
-            const remindId = m ? m[1] : null;
+            const remindId = data.match(/^put_(.+)$/)[1];
             if (!remindId || remindId === 'undefined') {
               console.warn('Попытка изменить напоминание без id:', data);
               await this.bot.sendMessage(chatId, '❗ Невозможно изменить это напоминание — отсутствует идентификатор.');
               break;
             }
-            await this.bot.sendMessage(chatId, 'Что изменяем?', {
-              reply_markup: {
-                inline_keyboard: [
-                  [{ text: '🕰 Изменить время', callback_data: `change_time_${remindId}` }],
-                  [{ text: '📝 Изменить напоминание', callback_data: `change_content_${remindId}` }],
-                  [{ text: '⬅️ Назад', callback_data: 'back_to_reminds' }]
-                ]
+
+            await this.bot.sendMessage(
+              chatId,
+              'Что вы хотите изменить?',
+              {
+                reply_markup: {
+                  inline_keyboard: [
+                    [{ text: '📝 Изменить содержание', callback_data: `change_content_${remindId}` }],
+                    [{ text: '🕰 Изменить время', callback_data: `change_time_${remindId}` }],
+                    [{ text: '❌ Отмена', callback_data: 'cancel_put' }]
+                  ]
+                }
               }
-            });
+            );
             break;
           }
 
           case /^change_time_(.+)$/.test(data): {
-            const m = data.match(/^change_time_(.+)$/);
-            const timeRemindId = m ? m[1] : null;
-            if (!timeRemindId) {
+            const remindId = data.match(/^change_time_(.+)$/)[1];
+            if (!remindId) {
               await this.bot.sendMessage(chatId, '❗ Невозможно изменить время — отсутствует идентификатор.');
               break;
             }
-            await this.bot.sendMessage(chatId, 'Выберите тип напоминания:', {
-              reply_markup: {
-                inline_keyboard: [
-                  [{ text: "⏰ Ежедневно", callback_data: `put_daily_${timeRemindId}` }],
-                  [{ text: "📅 В определенную дату", callback_data: `put_specific_${timeRemindId}` }],
-                  [{ text: "🔄 По дням недели", callback_data: `put_weekly_${timeRemindId}` }],
-                  [{ text: "⏱️ Через несколько минут/часов", callback_data: `put_after_${timeRemindId}` }],
-                ]
+
+            await this.bot.sendMessage(
+              chatId,
+              'Выберите тип напоминания:',
+              {
+                reply_markup: {
+                  inline_keyboard: [
+                    [{ text: "⏰ Ежедневно", callback_data: `put_daily_${remindId}` }],
+                    [{ text: "📅 В определенную дату", callback_data: `put_specific_${remindId}` }],
+                    [{ text: "🔄 По дням недели", callback_data: `put_weekly_${remindId}` }],
+                    [{ text: "⏱️ Через несколько минут/часов", callback_data: `put_after_${remindId}` }],
+                    [{ text: "❌ Отмена", callback_data: 'cancel_put' }]
+                  ]
+                }
               }
-            });
+            );
+            break;
+          }
+
+          case /^change_content_(.+)$/.test(data): {
+            const remindId = data.match(/^change_content_(.+)$/)[1];
+            if (!remindId) {
+              await this.bot.sendMessage(chatId, '❗ Невозможно изменить содержание — отсутствует идентификатор.');
+              break;
+            }
+
+            const post = {
+              type: 'put_content',
+              remindId: remindId,
+              chatId: chatId,
+              messageId: Date.now(),
+              put: true
+            };
+            await answerHandler(this.bot, post);
             break;
           }
 
@@ -206,27 +234,6 @@ export class CallbackHandler {
 
           case /^put_after_(.+)$/.test(data):
             await handleAfterTime(this.bot, callbackQuery, data.match(/^put_after_(.+)$/)[1]);
-            break;
-
-          case /^change_content_(.+)$/.test(data): {
-            const contentRemindId = data.match(/^change_content_(.+)$/)[1];
-            if (!contentRemindId) {
-              await this.bot.sendMessage(chatId, '❗ Невозможно изменить содержание — отсутствует идентификатор.');
-              break;
-            }
-            const post = {
-              type: 'put_content',
-              remindId: contentRemindId,
-              chatId: chatId,
-              messageId: Date.now(),
-              put: true
-            };
-            await answerHandler(this.bot, post);
-            break;
-          }
-
-          case data === 'back_to_reminds':
-            await putReminds(this.bot, chatId);
             break;
 
           default:

@@ -1,5 +1,5 @@
 import { answerHandler } from '../dataHandler.js';
-import { updateRemindTime } from '../requests/putReminds.js';
+import api from '../../config/api.js';
 
 export async function handleDaily(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
@@ -27,17 +27,29 @@ function setupInputHandler(bot, chatId, remindId = null) {
     const time = parseInput(msg.text);
     bot.removeListener('text', handler);
     await bot.sendMessage(chatId, `Ежедневное напоминание будет установлено на ${time}`);
-    const post = {
-      type: 'daily',
-      time,
-      messageId: msg.message_id,
-      chatId,
-      put: !!remindId,
-      remindId
-    };
-    if (post.put) {
-      await updateRemindTime(bot, chatId, remindId, time);
+    
+    if (remindId) {
+      try {
+        await api.put(`/reminds/${remindId}`, {
+          remind: {
+            type: 'daily',
+            time: time
+          }
+        });
+        await bot.sendMessage(chatId, '✅ Время напоминания обновлено!');
+      } catch (error) {
+        console.error('Ошибка обновления времени:', error);
+        await bot.sendMessage(chatId, '❌ Ошибка обновления времени');
+      }
     } else {
+      const post = {
+        type: 'daily',
+        time,
+        messageId: msg.message_id,
+        chatId,
+        put: false,
+        remindId: null
+      };
       await answerHandler(bot, post);
     }
   };

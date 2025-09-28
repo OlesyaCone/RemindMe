@@ -1,5 +1,5 @@
 import { answerHandler } from '../dataHandler.js';
-import { updateRemindTime } from '../requests/putReminds.js';
+import api from '../../config/api.js';
 
 export async function handleWeekly(bot, callbackQuery, remindId = null) {
   const chatId = callbackQuery.message.chat.id;
@@ -37,19 +37,33 @@ function setupInputHandler(bot, chatId, remindId = null) {
     const { days, time } = parseInput(msg.text);
     bot.removeListener('text', handler);
     await bot.sendMessage(chatId, `Напоминание будет установлено на ${days.join(', ')} ${time}`);
-    const post = {
-      type: 'weekly',
-      time: time,
-      chatId: chatId,
-      messageId: msg.message_id,
-      days: days,
-      put: remindId ? true : false,
-      remindId: remindId
-    };
-
-    if (post.put) {
-      await updateRemindTime(bot, chatId, remindId, time);
+    
+    if (remindId) {
+      // Обновление времени существующего напоминания
+      try {
+        await api.put(`/reminds/${remindId}`, {
+          remind: {
+            type: 'weekly',
+            time: time,
+            days: days
+          }
+        });
+        await bot.sendMessage(chatId, '✅ Время напоминания обновлено!');
+      } catch (error) {
+        console.error('Ошибка обновления времени:', error);
+        await bot.sendMessage(chatId, '❌ Ошибка обновления времени');
+      }
     } else {
+      // Создание нового напоминания
+      const post = {
+        type: 'weekly',
+        time: time,
+        chatId: chatId,
+        messageId: msg.message_id,
+        days: days,
+        put: false,
+        remindId: null
+      };
       await answerHandler(bot, post);
     }
   };

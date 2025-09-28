@@ -69,12 +69,6 @@ class RemindController {
     async putRemind(req, res) {
         try {
             const { id } = req.params;
-            console.log('PUT запрос для ID:', id);
-
-            if (!ObjectId.isValid(id)) {
-                console.log('Некорректный ID:', id);
-                return res.status(400).json({ error: 'Некорректный идентификатор' });
-            }
 
             const updates = req.body;
             console.log('Обновление напоминания:', { id, updates });
@@ -83,11 +77,6 @@ class RemindController {
             
             const existingRemind = await collection.findOne({ _id: new ObjectId(id) });
             console.log('Найденное напоминание:', existingRemind);
-            
-            if (!existingRemind) {
-                console.log('Напоминание не найдено в базе');
-                return res.status(404).json({ error: 'Напоминание не найдено' });
-            }
 
             const setUpdates = {};
             
@@ -120,11 +109,6 @@ class RemindController {
                 { $set: setUpdates },
                 { returnDocument: 'after' }
             );
-
-            if (!result.value) {
-                console.log('Напоминание не найдено после обновления');
-                return res.status(404).json({ error: 'Напоминание не найдено' });
-            }
 
             console.log('Успешно обновлено:', result.value);
             res.json(result.value);

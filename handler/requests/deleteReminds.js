@@ -39,8 +39,6 @@ export async function deleteReminds(bot, chatId) {
             }]);
         }
 
-        inline_keyboard.push([{ text: '❌ Отмена', callback_data: 'cancel_delete' }]);
-
         await bot.sendMessage(
             chatId,
             '🗑 Выберите напоминание для удаления:',
