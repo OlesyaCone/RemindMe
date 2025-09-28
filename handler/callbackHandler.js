@@ -168,8 +168,7 @@ export class CallbackHandler {
                 reply_markup: {
                   inline_keyboard: [
                     [{ text: '📝 Изменить содержание', callback_data: `change_content_${remindId}` }],
-                    [{ text: '🕰 Изменить время', callback_data: `change_time_${remindId}` }],
-                    [{ text: '❌ Отмена', callback_data: 'cancel_put' }]
+                    [{ text: '🕰 Изменить время', callback_data: `change_time_${remindId}` }]
                   ]
                 }
               }
