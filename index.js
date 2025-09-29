@@ -4,16 +4,18 @@ import express from 'express';
 import { initCallbackHandler } from './handler/callbackHandler.js';
 import { showMainMenu } from './handler/menuUtils.js';
 import router from './server/routes.js';
+import UserController from './server/controllers/userController.js'; 
 
 const app = express();
 const port = process.env.PORT || 3005;
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
-
 app.use(express.json());
 app.use('/api', router);
-initCallbackHandler(bot)
+
+initCallbackHandler(bot);
+UserController.setBot(bot); 
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;

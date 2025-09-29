@@ -20,6 +20,7 @@
     "fs": "^0.0.1-security",
     "mongodb": "^6.18.0",
     "mongoose": "^8.16.5",
+    "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
     "node-telegram-bot-api": "^0.66.0",
     "nodemon": "^3.1.10",

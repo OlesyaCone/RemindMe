@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId } from 'mongodb';
 import { config } from 'dotenv';
 import { resolve } from 'path';
+import UserController from './userController.js';
 
 config({ path: resolve(process.cwd(), '.env') });
 
@@ -30,6 +31,9 @@ class RemindController {
 
             const collection = await this.getCollection();
             const result = await collection.insertOne(post);
+
+            const savedRemind = { ...post, _id: result.insertedId };
+            UserController.scheduleReminder(savedRemind);
 
             res.json({ success: true, id: result.insertedId });
         } catch (err) {
@@ -74,16 +78,16 @@ class RemindController {
             console.log('Обновление напоминания:', { id, updates });
 
             const collection = await this.getCollection();
-            
+
             const existingRemind = await collection.findOne({ _id: new ObjectId(id) });
             console.log('Найденное напоминание:', existingRemind);
 
             const setUpdates = {};
-            
+
             if (updates.content !== undefined) {
                 setUpdates.content = updates.content;
             }
-            
+
             if (updates.remind) {
                 if (updates.remind.type !== undefined) {
                     setUpdates['remind.type'] = updates.remind.type;
