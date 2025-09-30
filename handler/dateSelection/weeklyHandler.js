@@ -39,7 +39,6 @@ function setupInputHandler(bot, chatId, remindId = null) {
     await bot.sendMessage(chatId, `Напоминание будет установлено на ${days.join(', ')} ${time}`);
     
     if (remindId) {
-      // Обновление времени существующего напоминания
       try {
         await api.put(`/reminds/${remindId}`, {
           remind: {
@@ -54,7 +53,6 @@ function setupInputHandler(bot, chatId, remindId = null) {
         await bot.sendMessage(chatId, '❌ Ошибка обновления времени');
       }
     } else {
-      // Создание нового напоминания
       const post = {
         type: 'weekly',
         time: time,

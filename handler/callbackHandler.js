@@ -167,32 +167,7 @@ export class CallbackHandler {
               {
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: '📝 Изменить содержание', callback_data: `change_content_${remindId}` }],
-                    [{ text: '🕰 Изменить время', callback_data: `change_time_${remindId}` }]
-                  ]
-                }
-              }
-            );
-            break;
-          }
-
-          case /^change_time_(.+)$/.test(data): {
-            const remindId = data.match(/^change_time_(.+)$/)[1];
-            if (!remindId) {
-              await this.bot.sendMessage(chatId, '❗ Невозможно изменить время — отсутствует идентификатор.');
-              break;
-            }
-
-            await this.bot.sendMessage(
-              chatId,
-              'Выберите тип напоминания:',
-              {
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: "⏰ Ежедневно", callback_data: `put_daily_${remindId}` }],
-                    [{ text: "📅 В определенную дату", callback_data: `put_specific_${remindId}` }],
-                    [{ text: "🔄 По дням недели", callback_data: `put_weekly_${remindId}` }],
-                    [{ text: "⏱️ Через несколько минут/часов", callback_data: `put_after_${remindId}` }]
+                    [{ text: '📝 Изменить содержание', callback_data: `change_content_${remindId}` }]
                   ]
                 }
               }
@@ -217,23 +192,6 @@ export class CallbackHandler {
             await answerHandler(this.bot, post);
             break;
           }
-
-          case /^put_daily_(.+)$/.test(data):
-            await handleDaily(this.bot, callbackQuery, data.match(/^put_daily_(.+)$/)[1]);
-            break;
-
-          case /^put_specific_(.+)$/.test(data):
-            await handleSpecificDate(this.bot, callbackQuery, data.match(/^put_specific_(.+)$/)[1]);
-            break;
-
-          case /^put_weekly_(.+)$/.test(data):
-            await handleWeekly(this.bot, callbackQuery, data.match(/^put_weekly_(.+)$/)[1]);
-            break;
-
-          case /^put_after_(.+)$/.test(data):
-            await handleAfterTime(this.bot, callbackQuery, data.match(/^put_after_(.+)$/)[1]);
-            break;
-
           default:
             await this.bot.sendMessage(chatId, 'Неизвестная команда');
         }
