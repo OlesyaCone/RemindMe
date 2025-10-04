@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:3005/api';
+const API_BASE = 'http://127.0.0.1:3000/api';
 
 const instance = axios.create({
     baseURL: API_BASE,
@@ -10,4 +10,4 @@ const instance = axios.create({
     }
 });
 
-export default instance; 
+export default instance;
