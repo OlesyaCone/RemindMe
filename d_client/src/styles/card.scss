@@ -1,0 +1,111 @@
+.remindme-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+  gap: 1.5rem;
+  max-width: 1200px; 
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  position: absolute; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  width: 95%; 
+}
+
+.remindme-card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px #0000001a;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px #00000026;
+    border-color: var(--accent);
+  }
+
+  &:active {
+    transform: translateY(-2px);
+  }
+}
+
+.remindme-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.remindme-card-icon {
+  color: var(--accent);
+  font-size: 4rem !important;
+  font-weight: 300;
+  transition: all 0.3s ease;
+
+  .remindme-card:hover & {
+    transform: scale(1.1);
+    color: var(--accent-hover);
+  }
+}
+
+.remindme-card-text {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .remindme-cards-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.5rem 1rem;
+    max-width: 600px; 
+  }
+  
+  .remindme-card {
+    padding: 1.5rem 1rem;
+    min-height: 160px;
+  }
+  
+  .remindme-card-icon {
+    font-size: 3rem !important;
+  }
+  
+  .remindme-card-text {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .remindme-cards-container {
+    padding: 1rem 0.75rem;
+    max-width: 400px;
+  }
+  
+  .remindme-card {
+    padding: 1.25rem 0.75rem;
+    min-height: 140px;
+  }
+  
+  .remindme-card-icon {
+    font-size: 2.5rem !important;
+  }
+  
+  .remindme-card-text {
+    font-size: 1rem;
+  }
+}
