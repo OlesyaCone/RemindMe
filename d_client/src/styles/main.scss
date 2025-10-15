@@ -1,21 +1,21 @@
 :root[data-theme="dark"] {
-  --bg-primary: #13252d;      
-  --bg-header: #175d90;       
-  --bg-card: #8f7d3b;         
-  --text-primary: #dcd49c;    
-  --text-secondary: #aba052;  
-  --accent: #fbc60f;          
-  --accent-hover: #fae438;    
+  --bg-primary: #13252d;
+  --bg-header: #175d90;
+  --bg-card: #8f7d3b;
+  --text-primary: #dcd49c;
+  --text-secondary: #aba052;
+  --accent: #fbc60f;
+  --accent-hover: #fae438;
 }
 
 :root[data-theme="light"] {
-  --bg-primary: #dcd49c;     
-  --bg-header: #175d90;      
-  --bg-card: #ffffff;        
-  --text-primary: #13252d;   
-  --text-secondary: #8f7d3b; 
-  --accent: #fbc60f;         
-  --accent-hover: #e9d653;   
+  --bg-primary: #dcd49c;
+  --bg-header: #175d90;
+  --bg-card: #ffffff;
+  --text-primary: #13252d;
+  --text-secondary: #8f7d3b;
+  --accent: #fbc60f;
+  --accent-hover: #e9d653;
 }
 
 * {
@@ -24,11 +24,12 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -43,5 +44,5 @@ html, body {
   padding: 1rem;
   min-height: calc(100vh - 80px);
   background-color: var(--bg-primary);
-  position: relative; 
+  position: relative;
 }
