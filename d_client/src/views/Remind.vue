@@ -6,36 +6,11 @@ import FilterSelect from "../components/remind/FilterSelect.vue";
 import AddRemind from "../components/remind/AddRemind.vue";
 import EditRemind from "../components/remind/EditRemind.vue";
 import DeleteRemind from "../components/remind/DeleteRemind.vue";
+import type { Reminder } from "../types/reminder";
 import "../styles/remind/header.scss";
 import "../styles/remind/card.scss";
 import "../styles/remind/select.scss";
 import "../styles/remind/modal.scss";
-
-interface MediaItem {
-  type: 'photo' | 'video' | 'audio' | 'voice' | 'document';
-  file_id: string;
-}
-
-interface Reminder {
-  _id: string;
-  type: "daily" | "weekly" | "specific" | "after";
-  time: string;
-  messageId: number;
-  chatId: number;
-  put: boolean;
-  remindId: string | null;
-  days?: string[];
-  remind: {
-    type: "text" | "file" | "media_group";
-    content?: string;
-    caption?: string;
-    fileName?: string;
-    fileUrl?: string;
-    media_group_id?: string;
-    items?: MediaItem[];
-    entities: any[];
-  };
-}
 
 export default defineComponent({
   name: "RemindPage",
@@ -70,31 +45,19 @@ export default defineComponent({
       ],
       reminders: [
         {
+          id: "1",
           _id: "1",
-          type: "daily",
-          time: "09:00",
-          messageId: 5096,
-          chatId: 5248929206,
-          put: false,
-          remindId: null,
-          remind: {
-            type: "text",
-            content: "Тестовое напоминание",
-            entities: [],
-          },
-        },
-        {
-          _id: "2",
+          title: "Тренировка",
           type: "weekly",
-          time: "19:00",
-          messageId: 5247,
+          time: "20:00",
           chatId: 5248929206,
+          messageId: 5161,
+          days: ["ср"], 
           put: false,
           remindId: null,
-          days: ["пн", "ср", "пт"],
           remind: {
             type: "text",
-            content: "Тренировка",
+            content: "📅 СРЕДА (Дом) - Кардио + Стабильность кора\n\n1. Велотренажер: 20 минут\n2. Боковая планка: 3 подхода по 30-45 секунд на сторону\n3. Птица-собака: 3 подхода по 10 раз на сторону\n4. Ягодичный мостик: 3 подхода по 20 раз\n5. Вис на перекладине: 3 подхода на максимум",
             entities: [],
           },
         },
@@ -123,8 +86,11 @@ export default defineComponent({
       this.showDeleteModal = true;
     },
     handleAddReminder(newReminder: any) {
+      const reminderId = Date.now().toString();
       const reminder: Reminder = {
-        _id: Date.now().toString(), 
+        id: reminderId,
+        _id: reminderId,
+        title: newReminder.title || "Новое напоминание",
         type: newReminder.type,
         time: newReminder.time,
         messageId: Date.now(),
@@ -132,18 +98,20 @@ export default defineComponent({
         put: false,
         remindId: null,
         days: newReminder.days,
+        date: newReminder.date,
+        repeat: newReminder.repeat,
         remind: {
-          type: 'text',
-          content: newReminder.remind.content,
-          entities: []
-        }
+          type: "text",
+          content: newReminder.content || newReminder.remind?.content || "",
+          entities: [],
+        },
       };
       this.reminders.push(reminder);
       this.closeModals();
     },
     handleEditReminder(updatedReminder: Reminder) {
       const index = this.reminders.findIndex(
-        (r) => r._id === updatedReminder._id 
+        (r) => r._id === updatedReminder._id
       );
       if (index !== -1) {
         this.reminders[index] = updatedReminder;
@@ -151,7 +119,7 @@ export default defineComponent({
       this.closeModals();
     },
     handleDeleteReminder(reminder: Reminder) {
-      this.reminders = this.reminders.filter((r) => r._id !== reminder._id); 
+      this.reminders = this.reminders.filter((r) => r._id !== reminder._id);
       this.closeModals();
     },
     closeModals() {
@@ -185,7 +153,7 @@ export default defineComponent({
       <div class="reminders-list">
         <CardRemind
           v-for="reminder in filteredReminders"
-          :key="reminder._id" 
+          :key="reminder._id"
           :reminder="reminder"
           @edit="openEditModal"
           @delete="openDeleteModal"

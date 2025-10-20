@@ -49,10 +49,3 @@ export default defineComponent({
     </div>
   </div>
 </template>
-
-<style scoped>
-.fit-page {
-  min-height: 100vh;
-  background-color: var(--bg-primary);
-}
-</style>

@@ -1,20 +1,14 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
-
-interface Reminder {
-  id: string;
-  title: string;
-  type: string;
-  time?: string;
-}
+import type { Reminder } from "../../types/reminder";
 
 export default defineComponent({
   name: 'DeleteRemind',
   props: {
     reminder: {
       type: Object as () => Reminder,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: ['confirm', 'close'],
   methods: {
@@ -24,8 +18,8 @@ export default defineComponent({
     },
     close() {
       this.$emit('close');
-    }
-  }
+    },
+  },
 });
 </script>
 
@@ -36,12 +30,10 @@ export default defineComponent({
         <h2 class="modal-title">Удалить напоминание</h2>
         <button class="close-button" @click="close">×</button>
       </div>
-      
       <div class="modal-body">
         <p>Вы уверены, что хотите удалить напоминание "{{ reminder.title }}"?</p>
         <p class="text-muted">{{ reminder.type }} • {{ reminder.time }}</p>
       </div>
-      
       <div class="modal-actions">
         <button class="btn btn-secondary" @click="close">Отмена</button>
         <button class="btn btn-danger" @click="confirm">Удалить</button>
@@ -49,10 +41,3 @@ export default defineComponent({
     </div>
   </div>
 </template>
-
-<style scoped>
-.text-muted {
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
-}
-</style>

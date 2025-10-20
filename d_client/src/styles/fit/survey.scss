@@ -105,13 +105,13 @@
 }
 
 .btn-primary {
-  background-color: var(--bg-header);
-  color: #dcd49c;
+  background-color: var(--bg-header) !important;
+  color: #dcd49c !important;
 }
 
 .btn-secondary {
-  background-color: var(--bg-header);
-  color: #dcd49c;
+  background-color: var(--bg-header) !important;
+  color: #dcd49c !important;
 }
 
 .btn-primary:hover {
