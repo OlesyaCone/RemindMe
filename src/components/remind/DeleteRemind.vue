@@ -31,7 +31,7 @@ export default defineComponent({
         <button class="close-button" @click="close">×</button>
       </div>
       <div class="modal-body">
-        <p>Вы уверены, что хотите удалить напоминание "{{ reminder.title }}"?</p>
+        <p>Вы уверены, что хотите удалить напоминание "{{ reminder.remind?.content}}"?</p>
         <p class="text-muted">{{ reminder.type }} • {{ reminder.time }}</p>
       </div>
       <div class="modal-actions">

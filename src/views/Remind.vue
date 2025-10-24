@@ -161,7 +161,7 @@ export default defineComponent({
         <button @click="loadReminders" class="retry-button">Повторить</button>
       </div>
 
-      <div v-if="loading" class="loading-state">
+      <div v-if="loading" class="loader">
         Загрузка напоминаний...
       </div>
 
