@@ -158,7 +158,7 @@ export default defineComponent({
 
       <div class="modal-actions">
         <button class="btn btn-secondary" @click="close">Отмена</button>
-        <button class="btn btn-primary" @click="save">Сохранить</button>
+        <button class="btn btn-secondary" @click="save">Сохранить</button>
       </div>
     </div>
   </div>
