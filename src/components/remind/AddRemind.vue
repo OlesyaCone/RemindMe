@@ -29,7 +29,6 @@ export default defineComponent({
     save() {
       if (this.form.title.trim()) {
         const reminderData: any = {
-          title: this.form.title,
           type: this.form.type,
           remind: {
             type: "text" as const,
