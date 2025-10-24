@@ -57,82 +57,37 @@
   color: var(--accent-hover);
 }
 
-@media (max-width: 768px) {
-  .header-remind {
-    padding: 0.6rem; 
-  }
-  
-  .add-button {
-    font-size: 0.95rem;
-    padding: 0.3rem 0.4rem; 
-    gap: 0.25rem; 
-  }
-
-  .plus-icon {
-    font-size: 0.9rem; 
-  }
-}
-
-@media (max-width: 480px) {
-  .header-remind {
-    padding: 0.5rem; 
-  }
-
-  .page-title {
-    font-size: 1.1rem;
-  }
-
-  .add-button {
-    flex-direction: column;
-    align-items: center;
-    padding: 0.3rem 0.2rem; 
-    white-space: normal;
-    text-align: center;
-    gap: 0.1rem;
-  }
-
-  .add-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.05rem; 
-    font-size: 0.75rem;
-    line-height: 1.1;
-  }
-
-  .plus-icon {
-    font-size: 1rem; 
-  }
-
-  .back-button {
-    font-size: 0.9rem;
-    padding: 0.2rem; 
-  }
-}
-
 @media (max-width: 350px) {
   .header-remind {
-    padding: 0.4rem; 
+    padding: 0.5rem; 
+    min-height: 45px; 
   }
   
-  .add-text {
-    font-size: 0.65rem;
-    line-height: 1.05;
+  .back-button {
+    font-size: 0.85rem;
+    padding: 0.2rem;
+    width: 28px;
+    height: 28px;
   }
-
-  .plus-icon {
-    font-size: 0.9rem;
-  }
-
+  
   .page-title {
     font-size: 1rem;
-  }
-
-  .back-button {
-    font-size: 0.8rem;
-    padding: 0.15rem; 
+    max-width: 150px;
   }
   
   .add-button {
-    padding: 0.25rem 0.15rem; 
+    padding: 0.2rem 0.3rem;
+    gap: 0.15rem;
+    font-size: 0.8rem;
+    height: 28px;
+  }
+  
+  .plus-icon {
+    font-size: 0.9rem;
+  }
+  
+  .add-text {
+    font-size: 0.75rem;
+    gap: 0.1rem;
   }
 }
