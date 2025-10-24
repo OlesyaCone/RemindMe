@@ -8,6 +8,10 @@ import EditRemind from "../components/remind/EditRemind.vue";
 import DeleteRemind from "../components/remind/DeleteRemind.vue";
 import type { Reminder } from "../types/reminder";
 import { getReminders, createReminder, updateReminder, deleteReminder } from "../services/remind";
+import "../styles/remind/card.scss";
+import "../styles/remind/header.scss";
+import "../styles/remind/modal.scss";
+import "../styles/remind/select.scss";
 
 export default defineComponent({
   name: "RemindPage",
