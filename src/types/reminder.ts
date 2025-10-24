@@ -1,7 +1,6 @@
 export interface Reminder {
   id: string;
   _id: string;
-  title: string;
   type: "daily" | "weekly" | "specific" | "after";
   time?: string;
   date?: string | Date; 
@@ -11,7 +10,7 @@ export interface Reminder {
   remindId?: string | null;
   days?: string[]; 
   repeat?: number;
-  remind?: {
+  remind: {
     type: "text" | "file" | "media_group";
     content?: string;
     caption?: string;

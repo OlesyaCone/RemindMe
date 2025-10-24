@@ -22,7 +22,7 @@ export default defineComponent({
 <template>
   <div class="card-remind">
     <div class="card-meta">{{ metaText }}</div>
-    <div class="card-title">{{ reminder.remind.content }}</div>
+    <div class="card-title">{{ reminder.remind?.content }}</div>
     <div class="card-actions">
       <span class="action-edit" @click="$emit('edit', reminder)">Изменить</span>
       <span class="action-separator"></span>
