@@ -2,6 +2,15 @@
 import { defineComponent } from "vue";
 import type { Reminder } from "../../types/reminder";
 
+interface ReminderForm {
+  title: string;
+  type: "daily" | "weekly" | "specific" | "after";
+  date: string;
+  time: string;
+  days: string[];
+  repeat: number;
+}
+
 export default defineComponent({
   name: "EditRemind",
   props: {
@@ -13,25 +22,60 @@ export default defineComponent({
   emits: ["save", "close"],
   data() {
     return {
-      form: {} as any,
+      form: {
+        title: "",
+        type: "daily" as "daily" | "weekly" | "specific" | "after",
+        date: "",
+        time: "",
+        days: [] as string[],
+        repeat: 0,
+      } as ReminderForm,
     };
   },
   mounted() {
-    this.form = { ...this.reminder };
-    if (this.form.date instanceof Date) {
-      this.form.date = this.formatDate(this.form.date);
+    this.form.title = this.reminder.title;
+    this.form.type = this.reminder.type;
+    this.form.time = this.reminder.time || "";
+    this.form.repeat = this.reminder.repeat || 0;
+    
+    if (this.reminder.date) {
+      const date = new Date(this.reminder.date);
+      this.form.date = date.toISOString().slice(0, 10);
+    }
+    
+    if (this.reminder.days) {
+      this.form.days = this.reminder.days.map(day => String(day));
     }
   },
   methods: {
-    formatDate(date: Date): any {
-      return date.toISOString().split("T")[0];
-    },
     save() {
-      if (this.form.title.trim()) {
-        this.$emit("save", { ...this.form });
-        this.$emit("close");
+      if (!this.form.title.trim()) return;
+
+      const reminderData: Reminder = {
+        ...this.reminder,
+        title: this.form.title,
+        type: this.form.type,
+        time: this.form.time || undefined,
+        repeat: this.form.repeat || undefined,
+        remind: {
+          type: "text",
+          content: this.form.title,
+          entities: this.reminder.remind?.entities || [],
+        },
+      };
+
+      if (this.form.type === "specific" && this.form.date) {
+        reminderData.date = new Date(this.form.date);
       }
+
+      if (this.form.type === "weekly") {
+        reminderData.days = this.form.days;
+      }
+
+      this.$emit("save", reminderData);
+      this.$emit("close");
     },
+
     close() {
       this.$emit("close");
     },
@@ -48,9 +92,7 @@ export default defineComponent({
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label"
-            >Текст (для добавления файлов используйте бота)</label
-          >
+          <label class="form-label">Текст</label>
           <input
             v-model="form.title"
             type="text"
@@ -81,12 +123,7 @@ export default defineComponent({
 
         <div v-if="form.type === 'after'" class="form-group">
           <label class="form-label">Через (минут)</label>
-          <input
-            v-model="form.repeat"
-            type="number"
-            class="form-input"
-            min="1"
-          />
+          <input v-model.number="form.repeat" type="number" class="form-input" min="1" />
         </div>
 
         <div v-if="form.type === 'weekly'" class="form-group">

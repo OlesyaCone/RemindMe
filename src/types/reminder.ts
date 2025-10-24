@@ -4,12 +4,12 @@ export interface Reminder {
   title: string;
   type: "daily" | "weekly" | "specific" | "after";
   time?: string;
-  date?: Date;
+  date?: string | Date; 
   messageId?: number;
-  chatId?: number;
+  chatId?: string | number; 
   put?: boolean;
   remindId?: string | null;
-  days?: (string | number)[];
+  days?: string[]; 
   repeat?: number;
   remind?: {
     type: "text" | "file" | "media_group";

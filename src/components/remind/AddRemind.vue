@@ -6,7 +6,7 @@ interface ReminderForm {
   type: "daily" | "weekly" | "specific" | "after";
   date: string;
   time: string;
-  days: number[];
+  days: string[];
   repeat: number;
 }
 
@@ -20,7 +20,7 @@ export default defineComponent({
         type: "daily",
         date: "",
         time: "",
-        days: [],
+        days: [] as string[],
         repeat: 0,
       } as ReminderForm,
     };
@@ -28,7 +28,37 @@ export default defineComponent({
   methods: {
     save() {
       if (this.form.title.trim()) {
-        this.$emit("save", { ...this.form });
+        const reminderData: any = {
+          title: this.form.title,
+          type: this.form.type,
+          remind: {
+            type: "text" as const,
+            content: this.form.title,
+            entities: []
+          }
+        };
+
+        switch (this.form.type) {
+          case "specific":
+            reminderData.date = this.form.date;
+            reminderData.time = this.form.time;
+            break;
+          
+          case "weekly":
+            reminderData.time = this.form.time;
+            reminderData.days = this.form.days;
+            break;
+          
+          case "daily":
+            reminderData.time = this.form.time;
+            break;
+          
+          case "after":
+            reminderData.repeat = this.form.repeat;
+            break;
+        }
+        
+        this.$emit("save", reminderData);
         this.$emit("close");
       }
     },

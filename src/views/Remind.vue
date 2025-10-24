@@ -7,10 +7,7 @@ import AddRemind from "../components/remind/AddRemind.vue";
 import EditRemind from "../components/remind/EditRemind.vue";
 import DeleteRemind from "../components/remind/DeleteRemind.vue";
 import type { Reminder } from "../types/reminder";
-import "../styles/remind/header.scss";
-import "../styles/remind/card.scss";
-import "../styles/remind/select.scss";
-import "../styles/remind/modal.scss";
+import { getReminders, createReminder, updateReminder, deleteReminder } from "../services/remind";
 
 export default defineComponent({
   name: "RemindPage",
@@ -22,6 +19,7 @@ export default defineComponent({
     EditRemind,
     DeleteRemind,
   },
+  inject: ["chatId"],
   data() {
     return {
       selectedType: "all",
@@ -30,6 +28,8 @@ export default defineComponent({
       showEditModal: false,
       showDeleteModal: false,
       selectedReminder: null as Reminder | null,
+      loading: false,
+      error: null as string | null,
       typeOptions: [
         { value: "all", label: "Все" },
         { value: "daily", label: "Ежедневные" },
@@ -43,37 +43,49 @@ export default defineComponent({
         { value: "tomorrow", label: "Завтра" },
         { value: "week", label: "Эта неделя" },
       ],
-      reminders: [
-        {
-          id: "1",
-          _id: "1",
-          title: "Тренировка",
-          type: "weekly",
-          time: "20:00",
-          chatId: 5248929206,
-          messageId: 5161,
-          days: ["ср"], 
-          put: false,
-          remindId: null,
-          remind: {
-            type: "text",
-            content: "📅 СРЕДА (Дом) - Кардио + Стабильность кора\n\n1. Велотренажер: 20 минут\n2. Боковая планка: 3 подхода по 30-45 секунд на сторону\n3. Птица-собака: 3 подхода по 10 раз на сторону\n4. Ягодичный мостик: 3 подхода по 20 раз\n5. Вис на перекладине: 3 подхода на максимум",
-            entities: [],
-          },
-        },
-      ] as Reminder[],
+      reminders: [] as Reminder[],
     };
   },
   computed: {
-    filteredReminders() {
+    filteredReminders(): Reminder[] {
       return this.reminders.filter((reminder) => {
-        const typeMatch =
-          this.selectedType === "all" || reminder.type === this.selectedType;
-        return typeMatch;
+        return (
+          this.selectedType === "all" ||
+          reminder.type === this.selectedType
+        );
       });
     },
+    currentChatId(): string {
+      return (
+        (this.chatId as string) ||
+        localStorage.getItem("telegramUserId") ||
+        ""
+      );
+    },
+  },
+  async mounted() {
+    await this.loadReminders();
   },
   methods: {
+    async loadReminders() {
+      if (!this.currentChatId) {
+        this.error = "Chat ID не найден";
+        return;
+      }
+
+      this.loading = true;
+      this.error = null;
+
+      try {
+        this.reminders = await getReminders(this.currentChatId);
+      } catch (err) {
+        this.error = "Ошибка при загрузке напоминаний";
+        console.error(err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     openAddModal() {
       this.showAddModal = true;
     },
@@ -85,43 +97,46 @@ export default defineComponent({
       this.selectedReminder = reminder;
       this.showDeleteModal = true;
     },
-    handleAddReminder(newReminder: any) {
-      const reminderId = Date.now().toString();
-      const reminder: Reminder = {
-        id: reminderId,
-        _id: reminderId,
-        title: newReminder.title || "Новое напоминание",
-        type: newReminder.type,
-        time: newReminder.time,
-        messageId: Date.now(),
-        chatId: 5248929206,
-        put: false,
-        remindId: null,
-        days: newReminder.days,
-        date: newReminder.date,
-        repeat: newReminder.repeat,
-        remind: {
-          type: "text",
-          content: newReminder.content || newReminder.remind?.content || "",
-          entities: [],
-        },
-      };
-      this.reminders.push(reminder);
-      this.closeModals();
-    },
-    handleEditReminder(updatedReminder: Reminder) {
-      const index = this.reminders.findIndex(
-        (r) => r._id === updatedReminder._id
-      );
-      if (index !== -1) {
-        this.reminders[index] = updatedReminder;
+
+    async handleAddReminder(newReminderData: Reminder) {
+      try {
+        const newReminder = await createReminder({
+          ...newReminderData,
+          chatId: this.currentChatId,
+        });
+        this.reminders.push(newReminder);
+        this.closeModals();
+      } catch (error) {
+        this.error = "Ошибка при создании напоминания";
+        console.error(error);
       }
-      this.closeModals();
     },
-    handleDeleteReminder(reminder: Reminder) {
-      this.reminders = this.reminders.filter((r) => r._id !== reminder._id);
-      this.closeModals();
+
+    async handleEditReminder(updatedReminderData: Reminder) {
+      if (!this.selectedReminder) return;
+
+      try {
+        const updatedReminder = await updateReminder(this.selectedReminder._id, updatedReminderData);
+        const index = this.reminders.findIndex(r => r._id === this.selectedReminder!._id);
+        if (index !== -1) this.reminders[index] = updatedReminder;
+        this.closeModals();
+      } catch (error) {
+        this.error = "Ошибка при обновлении напоминания";
+        console.error(error);
+      }
     },
+
+    async handleDeleteReminder(reminder: Reminder) {
+      try {
+        await deleteReminder(reminder._id);
+        this.reminders = this.reminders.filter(r => r._id !== reminder._id);
+        this.closeModals();
+      } catch (error) {
+        this.error = "Ошибка при удалении напоминания";
+        console.error(error);
+      }
+    },
+
     closeModals() {
       this.showAddModal = false;
       this.showEditModal = false;
@@ -137,27 +152,42 @@ export default defineComponent({
     <HeaderRemind @add-reminder="openAddModal" />
 
     <div class="remind-content">
-      <div class="filters-container">
-        <FilterSelect
-          label="Тип напоминания"
-          :options="typeOptions"
-          v-model="selectedType"
-        />
-        <FilterSelect
-          label="Период"
-          :options="periodOptions"
-          v-model="selectedPeriod"
-        />
+      <div v-if="error" class="error-state">
+        {{ error }}
+        <button @click="loadReminders" class="retry-button">Повторить</button>
       </div>
 
-      <div class="reminders-list">
-        <CardRemind
-          v-for="reminder in filteredReminders"
-          :key="reminder._id"
-          :reminder="reminder"
-          @edit="openEditModal"
-          @delete="openDeleteModal"
-        />
+      <div v-if="loading" class="loading-state">
+        Загрузка напоминаний...
+      </div>
+
+      <div v-if="!loading && !error">
+        <div class="filters-container">
+          <FilterSelect
+            label="Тип напоминания"
+            :options="typeOptions"
+            v-model="selectedType"
+          />
+          <FilterSelect
+            label="Период"
+            :options="periodOptions"
+            v-model="selectedPeriod"
+          />
+        </div>
+
+        <div class="reminders-list">
+          <div v-if="filteredReminders.length === 0" class="empty-state">
+            Напоминаний не найдено
+          </div>
+          
+          <CardRemind
+            v-for="reminder in filteredReminders"
+            :key="reminder._id"
+            :reminder="reminder"
+            @edit="openEditModal"
+            @delete="openDeleteModal"
+          />
+        </div>
       </div>
     </div>
 
