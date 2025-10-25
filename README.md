@@ -38,12 +38,14 @@
 - **Vue 3** - прогрессивный фреймворк
 - **TypeScript** - типизированный JavaScript
 - **Vite** - сборщик проекта
+- **SCSS** - препроцессор CSS для стилей
 - **Telegram WebApp SDK** - интеграция MiniApp
 
 #### Инфраструктура
 - **Docker** - контейнеризация
 - **Render** - хостинг backend
 - **Netlify** - хостинг frontend
+
 
 
 
