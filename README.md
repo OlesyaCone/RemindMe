@@ -42,7 +42,8 @@
 
 #### Инфраструктура
 - **Docker** - контейнеризация
-- **Back4App** - хостинг backend
+- **Render** - хостинг backend
 - **Netlify** - хостинг frontend
+
 
 
