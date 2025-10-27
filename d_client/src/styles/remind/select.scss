@@ -1,0 +1,128 @@
+.filters-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--text-secondary);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filters-container::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-select-container {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.filter-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-select {
+  padding: 0.3rem 1.2rem 0.3rem 0.5rem;
+  border: 1px solid var(--text-secondary);
+  border-radius: 0.4rem;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.4rem center;
+  background-size: 0.4rem;
+  min-width: 90px;
+  max-width: 100px;
+  flex-shrink: 0;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-hover);
+}
+
+.filter-select:hover {
+  border-color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .filters-container {
+    gap: 0.4rem;
+    padding: 0.6rem;
+  }
+
+  .filter-select {
+    min-width: 85px;
+    max-width: 95px;
+    padding: 0.25rem 1rem 0.25rem 0.4rem;
+    font-size: 0.65rem;
+  }
+
+  .filter-label {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 422px) {
+  .filters-container {
+    gap: 0.3rem;
+    padding: 0.5rem;
+  }
+
+  .filter-select {
+    min-width: 80px;
+    max-width: 90px;
+    padding: 0.2rem 0.9rem 0.2rem 0.4rem;
+    font-size: 0.6rem;
+  }
+
+  .filter-label {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 350px) {
+  .filters-container {
+    gap: 0.25rem;
+    padding: 0.4rem;
+  }
+
+  .filter-select {
+    min-width: 75px;
+    max-width: 85px;
+    padding: 0.18rem 0.8rem 0.18rem 0.35rem;
+    font-size: 0.55rem;
+  }
+
+  .filter-label {
+    font-size: 0.55rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .filter-select {
+    min-width: 70px;
+    max-width: 80px;
+    padding: 0.15rem 0.7rem 0.15rem 0.3rem;
+  }
+
+  .filter-label {
+    font-size: 0.5rem;
+  }
+}
