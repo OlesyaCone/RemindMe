@@ -13,7 +13,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
 app.use(cors({
-  origin: ['http://10.7.0.190:5173/'],
+  origin: ['http://localhost:5173', 'https://remind-me-ot-menya.netlify.app'],
   credentials: true
 }));
 

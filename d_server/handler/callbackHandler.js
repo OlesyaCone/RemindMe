@@ -100,7 +100,7 @@ export class CallbackHandler {
                     {
                       text: "📱 Открыть приложение",
                       web_app: {
-                        url: `http://10.7.0.190:5173/`,
+                        url: `https://remind-me-ot-menya.netlify.app/`,
                       },
                     },
                   ],
