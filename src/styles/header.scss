@@ -1,0 +1,183 @@
+.remindme-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: var(--bg-header);
+  color: #dcd49c;
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 2px 8px #00000033;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  margin: 0;
+  border: none;
+  padding: 0.875rem 1rem; 
+  min-height: 60px; 
+}
+
+.remindme-title {
+  margin-left: 0.5rem; 
+}
+
+.theme {
+  display: flex;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
+  height: auto; 
+  margin-right: 0.5rem; 
+}
+
+.theme__fill,
+.theme__icon {
+  transition: 0.3s;
+}
+
+.theme__fill {
+  background-color: var(--bg);
+  display: block;
+  mix-blend-mode: difference;
+  position: fixed;
+  inset: 0;
+  height: 100%;
+  transform: translateX(-100%);
+}
+
+.theme__icon,
+.theme__toggle {
+  z-index: 1;
+}
+
+.theme__icon,
+.theme__icon-part {
+  position: absolute;
+}
+
+.theme__icon {
+  display: block;
+  top: 0.1em;
+  right: 1.8em;
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.theme__icon-part {
+  border-radius: 50%;
+  box-shadow: 0.2em -0.2em 0 0.2em #ffffff inset;
+  top: 0.2em;
+  left: 0.2em;
+  width: 1em;
+  height: 1em;
+  transition: box-shadow var(--transDur) ease-in-out,
+    opacity var(--transDur) ease-in-out,
+    transform var(--transDur) ease-in-out;
+  transform: scale(1);
+}
+
+.theme__icon-part ~ .theme__icon-part {
+  background-color: #ffffff;
+  border-radius: 0.05em;
+  top: 50%;
+  left: calc(50% - 0.05em);
+  transform: rotate(0deg) translateY(0.8em);
+  transform-origin: 50% 0;
+  width: 0.1em;
+  height: 0.2em;
+  opacity: 0;
+}
+
+.theme__icon-part {
+  @for $i from 3 through 9 {
+    &:nth-child(#{$i}) {
+      transform: rotate(#{($i - 2) * 45}deg) translateY(0.8em);
+    }
+  }
+}
+
+.theme__label,
+.theme__toggle,
+.theme__toggle-wrap {
+  position: relative;
+}
+
+.theme__toggle,
+.theme__toggle:before {
+  display: block;
+}
+
+.theme__toggle {
+  background-color: #043449;
+  border-radius: 25% / 50%;
+  box-shadow: 0 0 0 0.125em var(--primaryT);
+  padding: 0.25em;
+  width: 6em;
+  height: 3em;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background-color var(--transDur) ease-in-out,
+    box-shadow 0.15s ease-in-out,
+    transform var(--transDur) ease-in-out;
+}
+
+.theme__toggle:before {
+  background-color: #25b6f4;
+  border-radius: 50%;
+  content: "";
+  width: 2.5em;
+  height: 2.5em;
+  transition: 0.3s;
+}
+
+.theme__toggle:focus {
+  box-shadow: 0 0 0 0.125em var(--primary);
+  outline: transparent;
+}
+
+.theme__toggle:checked {
+  background-color: #fbedb6;
+}
+
+.theme__toggle:checked ~ .theme__icon {
+  transform: translateX(1.8em);
+}
+
+.theme__toggle:checked:before {
+  transform: translateX(3em); 
+  background-color: #f4ca25;
+}
+
+.theme__toggle:checked ~ .theme__icon .theme__icon-part:nth-child(1) {
+  box-shadow: 0.4em -0.4em 0 0.5em #ffffff inset;
+  transform: scale(0.5);
+  top: calc(50% - 0.5em);
+  left: calc(50% - 0.5em);
+}
+
+.theme__toggle:checked ~ .theme__icon .theme__icon-part ~ .theme__icon-part {
+  opacity: 1;
+}
+
+.theme__toggle:checked ~ .theme__icon .theme__icon-part {
+  @for $i from 2 through 9 {
+    &:nth-child(#{$i}) {
+      transform: rotate(#{($i - 2) * 45}deg) translateY(0.45em);
+    }
+  }
+}
+
+.theme__toggle-wrap {
+  margin: 0 0.75em;
+}
+
+@supports selector(:focus-visible) {
+  .theme__toggle:focus {
+    box-shadow: 0 0 0 0.125em var(--primaryT);
+  }
+
+  .theme__toggle:focus-visible {
+    box-shadow: 0 0 0 0.125em var(--primary);
+  }
+}
