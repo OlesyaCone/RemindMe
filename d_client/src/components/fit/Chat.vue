@@ -1,12 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-
-interface UserData {
-  healthRestrictions: string[];
-  experience: string;
-  goals: string[];
-  equipment: string[];
-}
+import type { UserSurveyData, NewData } from "../../types/fit";
 
 interface Message {
   id: string;
@@ -19,9 +13,13 @@ export default defineComponent({
   name: "Chat",
   props: {
     userData: {
-      type: Object as () => UserData,
+      type: Object as () => UserSurveyData,
       required: true,
     },
+    schedules: {
+      type: Array as () => NewData[],
+      required: true,
+    }
   },
   emits: ["back"],
   data() {
@@ -31,20 +29,18 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.generateWelcomeMessage();
+    this.showSchedules();
   },
   methods: {
-    generateWelcomeMessage() {
-      const welcomeText = this.generateProgram();
+    showSchedules() {
+      const schedulesText = JSON.stringify(this.schedules, null, 2);
+      
       this.messages.push({
         id: "1",
-        text: welcomeText,
+        text: `✅ Сгенерированы напоминания:\n\n\`\`\`json\n${schedulesText}\n\`\`\``,
         isBot: true,
         timestamp: new Date(),
       });
-    },
-    generateProgram(): string {
-      return `На основе ваших данных я составил программу тренировок!\n\n💪 Программа:\n- Приседания 3x15\n- Отжимания 3x12\n- Планка 3x30 сек\n\nНачнем тренировки?`;
     },
     sendMessage() {
       if (this.newMessage.trim()) {

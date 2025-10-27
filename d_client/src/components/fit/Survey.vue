@@ -1,34 +1,49 @@
 <script lang="ts">
-import { defineComponent } from 'vue';
-
-interface UserData {
-  healthRestrictions: string[];
-  experience: string;
-  goals: string[];
-  equipment: string[];
-}
+import { defineComponent } from "vue";
+import type { UserSurveyData, NewData } from "../../types/fit";
+import Restrictions from "./survey/Restrictions.vue";
+import LevelGoal from "./survey/LevelGoal.vue";
+import Equipment from "./survey/Equipment.vue";
+import Days from "./survey/Days.vue";
 
 export default defineComponent({
-  name: 'Survey',
-  emits: ['complete'],
+  name: "Survey",
+  components: {
+    Restrictions,
+    LevelGoal,
+    Equipment,
+    Days,
+  },
+  emits: ["complete"],
+  inject: ["chatId"],
   data() {
     return {
       currentStep: 1,
-      totalSteps: 3,
+      totalSteps: 4,
       userData: {
         healthRestrictions: [],
-        experience: '',
+        jointProblems: [],
+        experience: "beginner", 
         goals: [],
-        equipment: []
-      } as UserData
+        equipment: [],
+      } as UserSurveyData,
+      schedules: [] as NewData[]
     };
+  },
+  computed: {
+    hasJointProblems(): boolean {
+      return this.userData.healthRestrictions.includes("joints");
+    },
   },
   methods: {
     nextStep() {
       if (this.currentStep < this.totalSteps) {
         this.currentStep++;
       } else {
-        this.$emit('complete', this.userData);
+        this.$emit("complete", {
+          userData: this.userData,
+          schedules: this.schedules
+        });
       }
     },
     prevStep() {
@@ -36,15 +51,23 @@ export default defineComponent({
         this.currentStep--;
       }
     },
-    toggleArrayItem(array: string[], item: string) {
-      const index = array.indexOf(item);
-      if (index === -1) {
-        array.push(item);
-      } else {
-        array.splice(index, 1);
+    onHealthRestrictionsChange() {
+      if (!this.hasJointProblems) {
+        this.userData.jointProblems = [];
       }
-    }
-  }
+    },
+    updateUserData(newData: Partial<UserSurveyData>) {
+      this.userData = { ...this.userData, ...newData };
+    },
+    updateSchedules(schedules: NewData[]) {
+      this.schedules = schedules;
+    },
+    currentChatId(): string {
+      return (
+        (this.chatId as string) || localStorage.getItem("telegramUserId") || ""
+      );
+    },
+  },
 });
 </script>
 
@@ -57,90 +80,38 @@ export default defineComponent({
     </div>
 
     <div class="survey-content">
-      <div v-if="currentStep === 1" class="survey-step">
-        <h2>Есть ли у вас ограничения по здоровью?</h2>
-        <div class="options">
-          <label class="option">
-            <input type="checkbox" v-model="userData.healthRestrictions" value="joints">
-            Проблемы с суставами
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.healthRestrictions" value="heart">
-            Проблемы с сердцем
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.healthRestrictions" value="pregnancy">
-            Беременность
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.healthRestrictions" value="injuries">
-            Недавние травмы
-          </label>
-        </div>
-      </div>
+      <Restrictions
+        v-if="currentStep === 1"
+        :user-data="userData"
+        :has-joint-problems="hasJointProblems"
+        @health-restrictions-change="onHealthRestrictionsChange"
+        @update:user-data="updateUserData"
+      />
 
-      <div v-if="currentStep === 2" class="survey-step">
-        <h2>Ваш опыт тренировок</h2>
-        <div class="options">
-          <label class="option">
-            <input type="radio" v-model="userData.experience" value="beginner">
-            Начинающий
-          </label>
-          <label class="option">
-            <input type="radio" v-model="userData.experience" value="intermediate">
-            Средний уровень
-          </label>
-          <label class="option">
-            <input type="radio" v-model="userData.experience" value="advanced">
-            Продвинутый
-          </label>
-        </div>
+      <LevelGoal
+        v-if="currentStep === 2"
+        :user-data="userData"
+        @update:user-data="updateUserData"
+      />
 
-        <h3>Ваши цели</h3>
-        <div class="options">
-          <label class="option">
-            <input type="checkbox" v-model="userData.goals" value="weightloss">
-            Похудение
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.goals" value="muscle">
-            Набор массы
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.goals" value="fitness">
-            Поддержание формы
-          </label>
-        </div>
-      </div>
+      <Equipment
+        v-if="currentStep === 3"
+        :user-data="userData"
+        @update:user-data="updateUserData"
+      />
 
-      <div v-if="currentStep === 3" class="survey-step">
-        <h2>Какое оборудование есть?</h2>
-        <div class="options">
-          <label class="option">
-            <input type="checkbox" v-model="userData.equipment" value="dumbbells">
-            Гантели
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.equipment" value="bands">
-            Эспандеры
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.equipment" value="mat">
-            Коврик
-          </label>
-          <label class="option">
-            <input type="checkbox" v-model="userData.equipment" value="none">
-            Ничего нет
-          </label>
-        </div>
-      </div>
+      <Days
+        v-if="currentStep === 4"
+        :user-data="userData"
+        @generate-schedules="updateSchedules"
+      />
 
       <div class="survey-actions">
         <button v-if="currentStep > 1" @click="prevStep" class="btn-secondary">
           Назад
         </button>
         <button @click="nextStep" class="btn-primary">
-          {{ currentStep === totalSteps ? 'Завершить' : 'Далее' }}
+          {{ currentStep === totalSteps ? "Завершить" : "Далее" }}
         </button>
       </div>
     </div>

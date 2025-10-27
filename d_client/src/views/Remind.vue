@@ -3,9 +3,9 @@ import { defineComponent } from "vue";
 import HeaderRemind from "../components/remind/Header.vue";
 import CardRemind from "../components/remind/Card.vue";
 import FilterSelect from "../components/remind/FilterSelect.vue";
-import AddRemind from "../components/remind/AddRemind.vue";
-import EditRemind from "../components/remind/EditRemind.vue";
-import DeleteRemind from "../components/remind/DeleteRemind.vue";
+import AddRemind from "../components/remind/requests/AddRemind.vue";
+import EditRemind from "../components/remind/requests/EditRemind.vue";
+import DeleteRemind from "../components/remind/requests/DeleteRemind.vue";
 import type { Reminder } from "../types/reminder";
 import {
   getReminders,

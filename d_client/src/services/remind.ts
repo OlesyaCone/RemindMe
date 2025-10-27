@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Reminder } from '../types/reminder';
 
-const API_BASE_URL = 'https://remindme-nkgc.onrender.com/api';
+const API_BASE_URL = 'http://localhost:3000';
 
 export async function getReminders(chatId: string): Promise<Reminder[]> {
   try {

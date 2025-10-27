@@ -1,38 +1,42 @@
 <script lang="ts">
 import { defineComponent } from "vue";
+import type { UserSurveyData, NewData } from "../types/fit";
 import Survey from "../components/fit/Survey.vue";
 import Chat from "../components/fit/Chat.vue";
 import "../styles/fit/survey.scss";
+import "../styles/fit/options.scss"
+import "../styles/fit/days.scss"
+import "../styles/fit/joint.scss"
 import "../styles/fit/chat.scss";
 
-interface UserData {
-  healthRestrictions: string[];
-  experience: string;
-  goals: string[];
-  equipment: string[];
+interface SurveyCompleteData {
+  userData: UserSurveyData;
+  schedules: NewData[];
 }
 
 export default defineComponent({
   name: "FitPage",
   components: {
     Survey,
-    Chat
+    Chat,
   },
   data() {
     return {
       showSurvey: true,
-      userData: {} as UserData
+      userData: {} as UserSurveyData,
+      schedules: [] as NewData[]
     };
   },
   methods: {
-    handleSurveyComplete(data: UserData) {
-      this.userData = data;
+    handleSurveyComplete(data: SurveyCompleteData) {
+      this.userData = data.userData;
+      this.schedules = data.schedules;
       this.showSurvey = false;
     },
     handleBackToSurvey() {
       this.showSurvey = true;
-    }
-  }
+    },
+  },
 });
 </script>
 
@@ -44,6 +48,7 @@ export default defineComponent({
     <div v-else>
       <Chat 
         :user-data="userData" 
+        :schedules="schedules"
         @back="handleBackToSurvey" 
       />
     </div>
