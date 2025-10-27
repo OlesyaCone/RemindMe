@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import type { Reminder } from "../../types/reminder";
+import type { Reminder } from "../../../types/reminder";
 
 interface ReminderForm {
   title: string;
