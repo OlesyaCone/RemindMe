@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Reminder } from '../types/reminder';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'http://127.0.0.1:3000/api';
 
 export async function getReminders(chatId: string): Promise<Reminder[]> {
   try {

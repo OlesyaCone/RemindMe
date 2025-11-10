@@ -2,6 +2,16 @@
 import { defineComponent } from 'vue';
 import type { UserSurveyData } from "../../../types/fit";
 
+interface HealthRestriction {
+  value: string;
+  label: string;
+}
+
+interface JointProblem {
+  value: string;
+  label: string;
+}
+
 export default defineComponent({
   name: 'Restrictions',
   props: {
@@ -15,6 +25,24 @@ export default defineComponent({
     }
   },
   emits: ['health-restrictions-change', 'update:userData'],
+  data() {
+    return {
+      healthRestrictions: [
+        { value: 'joints', label: 'Проблемы с суставами' },
+        { value: 'heart', label: 'Проблемы с сердцем' },
+        { value: 'pregnancy', label: 'Беременность' }
+      ] as HealthRestriction[],
+      jointProblems: [
+        { value: 'knees', label: 'Колени' },
+        { value: 'shoulders', label: 'Плечи' },
+        { value: 'elbows', label: 'Локти' },
+        { value: 'back', label: 'Спина' },
+        { value: 'hips', label: 'Тазобедренные' },
+        { value: 'ankles', label: 'Голеностопы' },
+        { value: 'wrists', label: 'Кисти и запястья' }
+      ] as JointProblem[]
+    };
+  },
   methods: {
     toggleHealthRestriction(restriction: string) {
       const restrictions = [...this.userData.healthRestrictions];
@@ -64,115 +92,41 @@ export default defineComponent({
   <div class="survey-step">
     <h2>Есть ли у вас ограничения по здоровью?</h2>
     <div class="options">
-      <label class="option">
+      <label 
+        v-for="restriction in healthRestrictions" 
+        :key="restriction.value" 
+        class="option"
+      >
         <input 
           type="checkbox" 
-          :checked="isHealthRestrictionSelected('joints')"
-          @change="toggleHealthRestriction('joints')"
+          :checked="isHealthRestrictionSelected(restriction.value)"
+          @change="toggleHealthRestriction(restriction.value)"
         >
         <span class="checkmark"></span>
-        Проблемы с суставами
+        {{ restriction.label }}
       </label>
-      
+
       <div v-if="hasJointProblems" class="joint-options">
         <div class="joint-header">
           <h3>Какие именно суставы?</h3>
           <div class="joint-subtitle">Можно выбрать несколько</div>
         </div>
         <div class="joint-grid">
-          <label class="joint-option">
+          <label 
+            v-for="problem in jointProblems" 
+            :key="problem.value" 
+            class="joint-option"
+          >
             <input 
               type="checkbox" 
-              :checked="isJointProblemSelected('knees')"
-              @change="toggleJointProblem('knees')"
+              :checked="isJointProblemSelected(problem.value)"
+              @change="toggleJointProblem(problem.value)"
             >
             <span class="joint-checkmark"></span>
-            <span class="joint-label">Колени</span>
-          </label>
-          <label class="joint-option">
-            <input 
-              type="checkbox" 
-              :checked="isJointProblemSelected('shoulders')"
-              @change="toggleJointProblem('shoulders')"
-            >
-            <span class="joint-checkmark"></span>
-            <span class="joint-label">Плечи</span>
-          </label>
-          <label class="joint-option">
-            <input 
-              type="checkbox" 
-              :checked="isJointProblemSelected('elbows')"
-              @change="toggleJointProblem('elbows')"
-            >
-            <span class="joint-checkmark"></span>
-            <span class="joint-label">Локти</span>
-          </label>
-          <label class="joint-option">
-            <input 
-              type="checkbox" 
-              :checked="isJointProblemSelected('back')"
-              @change="toggleJointProblem('back')"
-            >
-            <span class="joint-checkmark"></span>
-            <span class="joint-label">Спина</span>
-          </label>
-          <label class="joint-option">
-            <input 
-              type="checkbox" 
-              :checked="isJointProblemSelected('hips')"
-              @change="toggleJointProblem('hips')"
-            >
-            <span class="joint-checkmark"></span>
-            <span class="joint-label">Тазобедренные</span>
-          </label>
-          <label class="joint-option">
-            <input 
-              type="checkbox" 
-              :checked="isJointProblemSelected('ankles')"
-              @change="toggleJointProblem('ankles')"
-            >
-            <span class="joint-checkmark"></span>
-            <span class="joint-label">Голеностопы</span>
-          </label>
-          <label class="joint-option">
-            <input 
-              type="checkbox" 
-              :checked="isJointProblemSelected('wrists')"
-              @change="toggleJointProblem('wrists')"
-            >
-            <span class="joint-checkmark"></span>
-            <span class="joint-label">Кисти и запястья</span>
+            <span class="joint-label">{{ problem.label }}</span>
           </label>
         </div>
       </div>
-
-      <label class="option">
-        <input 
-          type="checkbox" 
-          :checked="isHealthRestrictionSelected('heart')"
-          @change="toggleHealthRestriction('heart')"
-        >
-        <span class="checkmark"></span>
-        Проблемы с сердцем
-      </label>
-      <label class="option">
-        <input 
-          type="checkbox" 
-          :checked="isHealthRestrictionSelected('pregnancy')"
-          @change="toggleHealthRestriction('pregnancy')"
-        >
-        <span class="checkmark"></span>
-        Беременность
-      </label>
-      <label class="option">
-        <input 
-          type="checkbox" 
-          :checked="isHealthRestrictionSelected('injuries')"
-          @change="toggleHealthRestriction('injuries')"
-        >
-        <span class="checkmark"></span>
-        Недавние травмы
-      </label>
     </div>
   </div>
 </template>
