@@ -1,5 +1,3 @@
-// ✅ d_server/server/controllers/userController.js
-
 import { MongoClient, ObjectId } from 'mongodb';
 import { config } from 'dotenv';
 import { resolve } from 'path';
