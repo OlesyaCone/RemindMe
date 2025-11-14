@@ -68,7 +68,7 @@ export default defineComponent({
   
   provide() {
     return {
-      chatId: this.chatId as string | null,
+      chatId: this.chatId,
       isTelegram: this.isTelegram
     };
   }
@@ -87,3 +87,4 @@ export default defineComponent({
     </div>
   </div>
 </template>
+[file content end]

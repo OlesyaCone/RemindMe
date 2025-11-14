@@ -11,10 +11,21 @@ export default defineComponent({
     },
   },
   emits: ['confirm', 'close'],
+  data() {
+    return {
+      loading: false,
+    };
+  },
   methods: {
-    confirm() {
-      this.$emit('confirm', this.reminder);
-      this.$emit('close');
+    async confirm() {
+      this.loading = true;
+      try {
+        this.$emit('confirm', this.reminder);
+      } catch (error) {
+        console.error('Ошибка при удалении:', error);
+      } finally {
+        this.loading = false;
+      }
     },
     close() {
       this.$emit('close');
@@ -28,15 +39,17 @@ export default defineComponent({
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Удалить напоминание</h2>
-        <button class="close-button" @click="close">×</button>
+        <button class="close-button" @click="close" :disabled="loading">×</button>
       </div>
       <div class="modal-body">
-        <p>Вы уверены, что хотите удалить напоминание "{{ reminder.remind?.content}}"?</p>
-        <p class="text-muted">{{ reminder.type }} • {{ reminder.time }}</p>
+        <p>Вы уверены, что хотите удалить напоминание "{{ reminder.remind?.content }}"?</p>
+        <p class="text-muted">{{ reminder.type }} • {{ reminder.time || '' }}</p>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" @click="close">Отмена</button>
-        <button class="btn btn-danger" @click="confirm">Удалить</button>
+        <button class="btn btn-secondary" @click="close" :disabled="loading">Отмена</button>
+        <button class="btn btn-danger" @click="confirm" :disabled="loading">
+          {{ loading ? 'Удаление...' : 'Удалить' }}
+        </button>
       </div>
     </div>
   </div>

@@ -13,10 +13,6 @@ import {
   updateReminder,
   deleteReminder,
 } from "../services/remind";
-import "../styles/remind/card.scss";
-import "../styles/remind/header.scss";
-import "../styles/remind/modal.scss";
-import "../styles/remind/select.scss";
 
 export default defineComponent({
   name: "RemindPage",
@@ -39,23 +35,33 @@ export default defineComponent({
       selectedReminder: null as Reminder | null,
       loading: false,
       error: null as string | null,
-      typeOptions: [
+      reminders: [] as Reminder[],
+    };
+  },
+  computed: {
+    currentChatId(): string {
+      return (this.chatId as string) || "";
+    },
+
+    typeOptions() {
+      return [
         { value: "all", label: "Все" },
         { value: "daily", label: "Ежедневные" },
         { value: "weekly", label: "Еженедельные" },
         { value: "specific", label: "В определенную дату" },
         { value: "after", label: "Через несколько минут/часов" },
-      ],
-      periodOptions: [
+      ];
+    },
+
+    periodOptions() {
+      return [
         { value: "all", label: "Все" },
         { value: "today", label: "Сегодня" },
         { value: "tomorrow", label: "Завтра" },
         { value: "week", label: "Эта неделя" },
-      ],
-      reminders: [] as Reminder[],
-    };
-  },
-  computed: {
+      ];
+    },
+
     filteredReminders(): Reminder[] {
       return this.reminders.filter((reminder) => {
         return (
@@ -63,10 +69,21 @@ export default defineComponent({
         );
       });
     },
-    currentChatId(): string {
-      return (
-        (this.chatId as string) || localStorage.getItem("telegramUserId") || ""
-      );
+
+    isEmptyState(): boolean {
+      return !this.loading && !this.error && this.filteredReminders.length === 0;
+    },
+
+    showContent(): boolean {
+      return !this.loading && !this.error;
+    },
+
+    showLoader(): boolean {
+      return this.loading && !this.error;
+    },
+
+    showError(): boolean {
+      return !!this.error;
     },
   },
   async mounted() {
@@ -95,22 +112,24 @@ export default defineComponent({
     openAddModal() {
       this.showAddModal = true;
     },
+    
     openEditModal(reminder: Reminder) {
       this.selectedReminder = reminder;
       this.showEditModal = true;
     },
+    
     openDeleteModal(reminder: Reminder) {
       this.selectedReminder = reminder;
       this.showDeleteModal = true;
     },
 
-    async handleAddReminder(newReminderData: Reminder) {
+    async handleAddReminder(newReminderData: Partial<Reminder>) {
       try {
-        const newReminder = await createReminder({
+        await createReminder({
           ...newReminderData,
           chatId: this.currentChatId,
         });
-        this.reminders.push(newReminder);
+        await this.loadReminders();
         this.closeModals();
       } catch (error) {
         this.error = "Ошибка при создании напоминания";
@@ -118,18 +137,12 @@ export default defineComponent({
       }
     },
 
-    async handleEditReminder(updatedReminderData: Reminder) {
-      if (!this.selectedReminder) return;
+    async handleEditReminder(updatedReminderData: Partial<Reminder>) {
+      if (!this.selectedReminder?.id) return;
 
       try {
-        const updatedReminder = await updateReminder(
-          this.selectedReminder._id,
-          updatedReminderData
-        );
-        const index = this.reminders.findIndex(
-          (r) => r._id === this.selectedReminder!._id
-        );
-        if (index !== -1) this.reminders[index] = updatedReminder;
+        await updateReminder(this.selectedReminder.id, updatedReminderData);
+        await this.loadReminders();
         this.closeModals();
       } catch (error) {
         this.error = "Ошибка при обновлении напоминания";
@@ -138,9 +151,11 @@ export default defineComponent({
     },
 
     async handleDeleteReminder(reminder: Reminder) {
+      if (!reminder.id) return;
+      
       try {
-        await deleteReminder(reminder._id);
-        this.reminders = this.reminders.filter((r) => r._id !== reminder._id);
+        await deleteReminder(reminder.id);
+        await this.loadReminders();
         this.closeModals();
       } catch (error) {
         this.error = "Ошибка при удалении напоминания";
@@ -163,25 +178,14 @@ export default defineComponent({
     <HeaderRemind @add-reminder="openAddModal" />
 
     <div class="remind-content">
-      <div v-if="error" class="error-state">
+      <div v-if="showError" class="error-state">
         {{ error }}
         <button @click="loadReminders" class="btn btn-secondary">Повторить</button>
       </div>
 
-      <div v-if="loading" class="loader">
-        <div class="bars bar1"></div>
-        <div class="bars bar2"></div>
-        <div class="bars bar3"></div>
-        <div class="bars bar4"></div>
-        <div class="bars bar5"></div>
-        <div class="bars bar6"></div>
-        <div class="bars bar7"></div>
-        <div class="bars bar8"></div>
-        <div class="bars bar9"></div>
-        <div class="bars bar10"></div>
-      </div>
+      <div v-if="showLoader" class="loader">Загрузка...</div>
 
-      <div v-if="!loading && !error">
+      <div v-if="showContent">
         <div class="filters-container">
           <FilterSelect
             label="Тип напоминания"
@@ -196,13 +200,13 @@ export default defineComponent({
         </div>
 
         <div class="reminders-list">
-          <div v-if="filteredReminders.length === 0" class="empty-state">
+          <div v-if="isEmptyState" class="empty-state">
             Напоминаний не найдено
-          </div>
+          </div> 
 
           <CardRemind
             v-for="reminder in filteredReminders"
-            :key="reminder._id"
+            :key="reminder.id"
             :reminder="reminder"
             @edit="openEditModal"
             @delete="openDeleteModal"
@@ -210,7 +214,6 @@ export default defineComponent({
         </div>
       </div>
     </div>
-
     <AddRemind
       v-if="showAddModal"
       @save="handleAddReminder"

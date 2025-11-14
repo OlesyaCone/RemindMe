@@ -23,7 +23,6 @@ export async function createReminder(reminderData: Partial<Reminder> & { chatId:
       ...reminderData,
       chatId: Number(reminderData.chatId) 
     };
-    
     const response = await axios.post(`${API_BASE_URL}/reminds`, dataWithNumberChatId);
     return response.data;
   } catch (error) {
@@ -48,8 +47,7 @@ export async function updateReminder(reminderId: string, reminderData: Partial<R
 
 export async function deleteReminder(reminderId: string): Promise<void> {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/reminds/${reminderId}`);
-    console.log('Успешно удалено:', response.data);
+    await axios.delete(`${API_BASE_URL}/reminds/${reminderId}`);
   } catch (error) {
     console.error('Ошибка при удалении напоминания:', error);
     throw error;
