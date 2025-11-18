@@ -5,6 +5,7 @@ import Restrictions from "./survey/Restrictions.vue";
 import LevelGoal from "./survey/LevelGoal.vue";
 import Equipment from "./survey/Equipment.vue";
 import Days from "./survey/Days.vue";
+import { getExercises } from "../../services/fit";
 
 export default defineComponent({
   name: "Survey",
@@ -22,12 +23,12 @@ export default defineComponent({
       totalSteps: 4,
       userData: {
         healthRestrictions: [],
-        jointProblems: [],
-        experience: "beginner", 
-        goals: [],
-        equipment: [],
+        jointProblems: ["none"],
+        experience: "beginner",
+        goals: "fitness",
+        equipment: ["body weight"],
       } as UserSurveyData,
-      schedules: [] as NewData[]
+      schedules: [] as NewData[],
     };
   },
   computed: {
@@ -36,32 +37,36 @@ export default defineComponent({
     },
   },
   methods: {
-    nextStep() {
+    async nextStep() {
       if (this.currentStep < this.totalSteps) {
         this.currentStep++;
       } else {
-        this.$emit("complete", {
-          userData: this.userData,
-          schedules: this.schedules
-        });
+        console.log(this.userData);
+        const serverResponse = await getExercises(this.userData);
+        this.$emit("complete", serverResponse);
       }
     },
+
     prevStep() {
       if (this.currentStep > 1) {
         this.currentStep--;
       }
     },
+
     onHealthRestrictionsChange() {
       if (!this.hasJointProblems) {
         this.userData.jointProblems = [];
       }
     },
+
     updateUserData(newData: Partial<UserSurveyData>) {
       this.userData = { ...this.userData, ...newData };
     },
+
     updateSchedules(schedules: NewData[]) {
       this.schedules = schedules;
     },
+
     currentChatId(): string {
       return (
         (this.chatId as string) || localStorage.getItem("telegramUserId") || ""

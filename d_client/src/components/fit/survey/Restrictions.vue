@@ -30,7 +30,8 @@ export default defineComponent({
       healthRestrictions: [
         { value: 'joints', label: 'Проблемы с суставами' },
         { value: 'heart', label: 'Проблемы с сердцем' },
-        { value: 'pregnancy', label: 'Беременность' }
+        { value: 'pregnancy', label: 'Беременность' },
+        { value: 'none', label: 'Ничего' },
       ] as HealthRestriction[],
       jointProblems: [
         { value: 'knees', label: 'Колени' },

@@ -26,7 +26,7 @@ export interface UserSurveyData {
   healthRestrictions: string[];
   jointProblems: string[];
   experience: ExperienceLevel;
-  goals: FitnessGoal[];
+  goals: FitnessGoal;
   equipment: EquipmentType[];
 }
 

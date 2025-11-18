@@ -21,13 +21,13 @@ export default defineComponent({
   data() {
     return {
       daysOfWeek: [
-        { name: 'Понедельник', value: 'пн', time: '12:00' },
-        { name: 'Вторник', value: 'вт', time: '12:00' },
-        { name: 'Среда', value: 'ср', time: '12:00' },
-        { name: 'Четверг', value: 'чт', time: '12:00' },
-        { name: 'Пятница', value: 'пт', time: '12:00' },
-        { name: 'Суббота', value: 'сб', time: '12:00' },
-        { name: 'Воскресенье', value: 'вс', time: '12:00' }
+        { name: 'Понедельник', value: 'пн', time: '18:00' },
+        { name: 'Вторник', value: 'вт', time: '18:00' },
+        { name: 'Среда', value: 'ср', time: '18:00' },
+        { name: 'Четверг', value: 'чт', time: '18:00' },
+        { name: 'Пятница', value: 'пт', time: '18:00' },
+        { name: 'Суббота', value: 'сб', time: '18:00' },
+        { name: 'Воскресенье', value: 'вс', time: '18:00' }
       ] as DayOption[],
       selectedDays: [] as string[]
     };
