@@ -20,12 +20,6 @@ export default defineComponent({
           icon: "notifications",
           to: "/remind",
         },
-        {
-          id: 2,
-          title: "Составить программу тренировок",
-          icon: "exercise",
-          to: "/fit",
-        },
       ] as Card[],
     };
   },

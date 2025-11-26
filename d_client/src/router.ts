@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Fit from "./views/Fit.vue";
 import Remind from "./views/Remind.vue";
 import Card from "./views/Card.vue";
 
@@ -10,11 +9,6 @@ const router = createRouter({
       path: "/",
       name: "Card",
       component: Card,
-    },
-    {
-      path: "/fit",
-      name: "Fit",
-      component: Fit,
     },
     {
       path: "/remind",

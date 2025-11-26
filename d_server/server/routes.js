@@ -9,6 +9,4 @@ router.get('/reminds', RemindController.getRemind.bind(RemindController));
 router.delete('/reminds/:id', RemindController.deleteRemind.bind(RemindController));
 router.put('/reminds/:id', RemindController.putRemind.bind(RemindController));
 
-router.get('/exercises', FitController.getFit);
-
 export default router;
